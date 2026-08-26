@@ -24,12 +24,10 @@ static void	heapify_down(t_heap *heap, int index, t_scheduler scheduler)
 		left = index * 2 + 1;
 		right = left + 1;
 		swap_index = index;
-		if ((left < heap->size)
-			&& (request_has_priority(heap->elements[left],
-					heap->elements[swap_index],
-					scheduler)))
+		if ((left < heap->size) && (request_has_priority(heap->elements[left],
+					heap->elements[swap_index], scheduler)))
 		{
-			swap_index = left ;
+			swap_index = left;
 		}
 		if (right < heap->size && request_has_priority(heap->elements[right],
 				heap->elements[swap_index], scheduler))

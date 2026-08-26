@@ -23,8 +23,8 @@ int	main(int argc, char **argv)
 	}
 	rules.start_time = get_time_in_ms();
 	printf("--- Configuration chargée avec succès ---\n");
-	printf("Coders: %d | Burnout: %ldms | Compile: %ldms\n",
-		rules.nb_coders, rules.time_to_burnout, rules.time_to_compile);
+	printf("Coders: %d | Burnout: %ldms | Compile: %ldms\n", rules.nb_coders,
+		rules.time_to_burnout, rules.time_to_compile);
 	printf("Debug: %ldms | Refactor: %ldms | Compiles req: %d\n",
 		rules.time_to_debug, rules.time_to_refactor, rules.nb_compiles_req);
 	printf("Cooldown: %ldms | Scheduler: ", rules.dongle_cooldown);

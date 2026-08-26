@@ -20,7 +20,7 @@ t_heap	create_heap(int capacity)
 
 	heap.capacity = capacity;
 	heap.size = 0;
-	heap.elements = malloc(sizeof(t_request) * (size_t) capacity);
+	heap.elements = malloc(sizeof(t_request) * (size_t)capacity);
 	if (!heap.elements)
 		heap.capacity = 0;
 	return (heap);
@@ -38,8 +38,8 @@ void	free_heap(t_heap *heap)
 }
 
 // Compare la priorité de deux requêtes selon le scheduler actif
-static	bool	request_has_priority(t_request first, t_request second,
-	t_scheduler	scheduler)
+static bool	request_has_priority(t_request first, t_request second,
+		t_scheduler scheduler)
 {
 	if (scheduler == E_SCHED_FIFO)
 	{
@@ -62,8 +62,8 @@ static void	heapify_up(t_heap *heap, t_scheduler scheduler)
 	while (index > 0)
 	{
 		parent = (index - 1) / 2;
-		if (!request_has_priority(heap->elements[index],
-				heap->elements[parent], scheduler))
+		if (!request_has_priority(heap->elements[index], heap->elements[parent],
+				scheduler))
 			break ;
 		tmp = heap->elements[index];
 		heap->elements[index] = heap->elements[parent];

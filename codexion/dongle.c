@@ -18,7 +18,7 @@ int	init_dongles(t_dongle **dongles, int nb_coders)
 
 	if (nb_coders <= 0)
 		return (1);
-	*dongles = malloc(sizeof(t_dongle) * (size_t) nb_coders);
+	*dongles = malloc(sizeof(t_dongle) * (size_t)nb_coders);
 	if (!*dongles)
 		return (1);
 	index = 0;
@@ -27,8 +27,8 @@ int	init_dongles(t_dongle **dongles, int nb_coders)
 		(*dongles)[index].id = index + 1;
 		(*dongles)[index].is_busy = false;
 		(*dongles)[index].last_released_time = 0;
-		if (pthread_mutex_init(&(*dongles)[index].mutex, NULL) != 0 ||
-				pthread_cond_init(&(*dongles)[index].cond, NULL) != 0)
+		if (pthread_mutex_init(&(*dongles)[index].mutex, NULL) != 0
+			|| pthread_cond_init(&(*dongles)[index].cond, NULL) != 0)
 			return (1);
 		(*dongles)[index].queue = create_heap(nb_coders + 1);
 		index++;
@@ -36,8 +36,8 @@ int	init_dongles(t_dongle **dongles, int nb_coders)
 	return (0);
 }
 
-void	assign_dongles_to_coders(t_coder	*coders, t_dongle	*dongles,
-	int nb_coders)
+void	assign_dongles_to_coders(t_coder *coders, t_dongle *dongles,
+		int nb_coders)
 {
 	int	index;
 
@@ -66,8 +66,8 @@ static bool	is_cooldown_active(t_dongle *dongle, t_rules *rules)
 	if (rules->dongle_cooldown == 0)
 		return (false);
 	current_time = get_time_in_ms();
-	return (((current_time - dongle->last_released_time)
-			< (rules->dongle_cooldown)));
+	return (((current_time
+				- dongle->last_released_time) < (rules->dongle_cooldown)));
 }
 
 static bool	should_take_dongle(t_coder *coder, t_dongle *dongle)
