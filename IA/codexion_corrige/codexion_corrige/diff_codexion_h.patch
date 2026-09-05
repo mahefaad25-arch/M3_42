@@ -1,0 +1,58 @@
+--- codexion.h	2026-09-05 19:41:01.860718131 +0000
++++ /home/claude/codexion_corrige/coders/codexion.h	2026-09-05 19:40:56.516849818 +0000
+@@ -33,13 +33,30 @@
+ }	t_sched;
+ 
+ /*
++** ---- Waiting list entry for one dongle ----
++** At most two coders can ever wait for a given dongle at the same
++** time: its left neighbour and its right neighbour (the topology
++** guarantees this, see init_coders). We size the waiting list to
++** that exact bound instead of a value unrelated to nb_coders.
++*/
++# define MAX_DONGLE_WAITERS 2
++
++typedef struct s_waiter
++{
++	int		coder_id;
++	long	arrival_ms;
++	long	deadline_ms;
++}	t_waiter;
++
++/*
+ ** ---- One dongle on the table ----
+ ** A dongle can be taken by only one coder at a time.
+ ** After being released it stays unavailable during "cooldown" ms.
+ ** Coders that want the dongle wait on "cond" and are served according
+-** to the arrival order they registered in the waiting list (a small
+-** array based priority list, sorted either by arrival time (fifo)
+-** or by deadline (edf)).
++** to the arrival order they registered in "waiters" (sorted either by
++** arrival time (fifo) or by deadline (edf)). The waiting list lives
++** inside the dongle itself (no global state) and is always accessed
++** under "lock", which dongle_try_take already holds while managing it.
+ */
+ typedef struct s_dongle
+ {
+@@ -49,6 +66,8 @@
+ 	long			free_since_ms;	/* timestamp (relative) since it became free */
+ 	pthread_mutex_t	lock;
+ 	pthread_cond_t	cond;
++	t_waiter		waiters[MAX_DONGLE_WAITERS];
++	int				waiters_count;
+ }	t_dongle;
+ 
+ /*
+@@ -116,9 +135,9 @@
+ void	dongle_release(t_sim *sim, int dongle_idx);
+ 
+ /* dongle_waiters.c */
+-void	waiter_add(int dongle_id, int coder_id, long arrival, long deadline);
+-void	waiter_remove(int dongle_id, int coder_id);
+-int		is_my_turn(t_sim *sim, int dongle_id, int coder_id);
++void	waiter_add(t_dongle *d, int coder_id, long arrival, long deadline);
++void	waiter_remove(t_dongle *d, int coder_id);
++int		is_my_turn(t_sim *sim, t_dongle *d, int coder_id);
+ void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock);
+ 
+ /* coder.c */

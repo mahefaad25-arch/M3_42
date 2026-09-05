@@ -6,7 +6,7 @@
 /*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
 /*                                                +#+#+#+#+#+   +#+         */
 /*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
-/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
+/*   Updated: 2026/09/05 00:00:00 by student          ###   ########.fr    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,19 @@
 ** ------------------------------------------------------------------
 ** How the scheduler works (kept simple for a beginner algorithm):
 **
-** Every dongle has its own waiting list: the coders currently
-** blocked waiting for it. A tiny fixed-size array per dongle is
-** enough, since at most nb_coders threads can ever wait for one
-** dongle (only its two neighbours actually can).
+** Every dongle keeps its own waiting list directly inside its
+** t_dongle structure (see codexion.h): the coders currently blocked
+** waiting for it. Since at most nb_coders dongles ever exist and at
+** most their two neighbours can wait on any single one of them, a
+** tiny fixed-size array per dongle (MAX_DONGLE_WAITERS) is always
+** enough, no matter how many coders the simulation has.
+**
+** NO GLOBAL VARIABLE is used: the waiting list is allocated together
+** with the dongle array (init.c), and is protected by the dongle's
+** own mutex ("d->lock"), which every caller already holds while it
+** registers, waits, and unregisters itself (see dongle_try_take() in
+** dongle.c). This also fixes the previous fixed-size-of-64 bug: the
+** list now scales exactly with nb_coders instead of a hardcoded cap.
 **
 ** When a coder wants a dongle it registers itself in the waiting
 ** list (arrival timestamp + its deadline = last_compile_start +
@@ -30,67 +39,55 @@
 ** ------------------------------------------------------------------
 */
 
-# define MAX_WAITERS 1000
-
-typedef struct s_waiter
-{
-	int		coder_id;
-	long	arrival_ms;
-	long	deadline_ms;
-}	t_waiter;
-
-/* Static arrays are zero-initialized by the C standard, so every
-** dongle's waiting list already starts empty (g_waiters_count[i]
-** == 0): no explicit reset function is needed. */
-static t_waiter			g_waiters[MAX_WAITERS][MAX_WAITERS];
-static int					g_waiters_count[MAX_WAITERS];
-static pthread_mutex_t		g_waiters_lock = PTHREAD_MUTEX_INITIALIZER;
-
 /*
 ** Registers a coder as waiting for a dongle, storing its arrival
 ** timestamp (for fifo) and its burnout deadline (for edf).
+** Caller must already hold sim->dongles[dongle_id].lock.
 */
-void	waiter_add(int dongle_id, int coder_id, long arrival, long deadline)
+void	waiter_add(t_sim *sim, int dongle_id, int coder_id,
+		long arrival, long deadline)
 {
-	int	i;
+	t_dongle	*d;
+	int			i;
 
-	pthread_mutex_lock(&g_waiters_lock);
-	i = g_waiters_count[dongle_id];
-	g_waiters[dongle_id][i].coder_id = coder_id;
-	g_waiters[dongle_id][i].arrival_ms = arrival;
-	g_waiters[dongle_id][i].deadline_ms = deadline;
-	g_waiters_count[dongle_id] = i + 1;
-	pthread_mutex_unlock(&g_waiters_lock);
+	d = &sim->dongles[dongle_id];
+	i = d->waiters_count;
+	if (i >= MAX_DONGLE_WAITERS)
+		return ;
+	d->waiters[i].coder_id = coder_id;
+	d->waiters[i].arrival_ms = arrival;
+	d->waiters[i].deadline_ms = deadline;
+	d->waiters_count = i + 1;
 }
 
 /*
 ** Removes a coder from a dongle's waiting list (called once it
 ** either obtained the dongle or gave up because the simulation
-** stopped).
+** stopped). Caller must already hold sim->dongles[dongle_id].lock.
 */
-void	waiter_remove(int dongle_id, int coder_id)
+void	waiter_remove(t_sim *sim, int dongle_id, int coder_id)
 {
-	int	i;
-	int	n;
+	t_dongle	*d;
+	int			i;
+	int			n;
 
-	pthread_mutex_lock(&g_waiters_lock);
-	n = g_waiters_count[dongle_id];
+	d = &sim->dongles[dongle_id];
+	n = d->waiters_count;
 	i = 0;
 	while (i < n)
 	{
-		if (g_waiters[dongle_id][i].coder_id == coder_id)
+		if (d->waiters[i].coder_id == coder_id)
 		{
 			while (i < n - 1)
 			{
-				g_waiters[dongle_id][i] = g_waiters[dongle_id][i + 1];
+				d->waiters[i] = d->waiters[i + 1];
 				i++;
 			}
-			g_waiters_count[dongle_id] = n - 1;
+			d->waiters_count = n - 1;
 			break ;
 		}
 		i++;
 	}
-	pthread_mutex_unlock(&g_waiters_lock);
 }
 
 /*
@@ -99,29 +96,25 @@ void	waiter_remove(int dongle_id, int coder_id)
 */
 static int	find_best_waiter(t_sim *sim, int dongle_id)
 {
-	int	i;
-	int	n;
-	int	best;
+	t_dongle	*d;
+	int			i;
+	int			best;
 
-	n = g_waiters_count[dongle_id];
+	d = &sim->dongles[dongle_id];
 	best = -1;
 	i = 0;
-	while (i < n)
+	while (i < d->waiters_count)
 	{
 		if (best == -1)
 			best = i;
 		else if (sim->p.scheduler == CX_SCHED_FIFO)
 		{
-			if (g_waiters[dongle_id][i].arrival_ms
-				< g_waiters[dongle_id][best].arrival_ms)
+			if (d->waiters[i].arrival_ms < d->waiters[best].arrival_ms)
 				best = i;
 		}
-		else if (g_waiters[dongle_id][i].deadline_ms
-				< g_waiters[dongle_id][best].deadline_ms
-			|| (g_waiters[dongle_id][i].deadline_ms
-					== g_waiters[dongle_id][best].deadline_ms
-				&& g_waiters[dongle_id][i].arrival_ms
-					< g_waiters[dongle_id][best].arrival_ms))
+		else if (d->waiters[i].deadline_ms < d->waiters[best].deadline_ms
+				|| (d->waiters[i].deadline_ms == d->waiters[best].deadline_ms
+					&& d->waiters[i].arrival_ms < d->waiters[best].arrival_ms))
 			best = i;
 		i++;
 	}
@@ -138,12 +131,10 @@ int	is_my_turn(t_sim *sim, int dongle_id, int coder_id)
 {
 	int	best;
 
-	pthread_mutex_lock(&g_waiters_lock);
 	best = find_best_waiter(sim, dongle_id);
-	pthread_mutex_unlock(&g_waiters_lock);
 	if (best == -1)
 		return (0);
-	return (g_waiters[dongle_id][best].coder_id == coder_id);
+	return (sim->dongles[dongle_id].waiters[best].coder_id == coder_id);
 }
 
 /*

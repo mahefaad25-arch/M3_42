@@ -1,0 +1,39 @@
+--- dongle.c	2026-09-05 19:41:01.858865102 +0000
++++ /home/claude/codexion_corrige/coders/dongle.c	2026-09-05 19:40:56.516552201 +0000
+@@ -22,7 +22,13 @@
+ 	d->id = id;
+ 	d->taken = 0;
+ 	d->owner = -1;
+-	d->free_since_ms = 0;
++	/* Sentinel far in the past: guarantees the cooldown check in
++	** can_take_now() never blocks the very first acquisition of a
++	** dongle at the beginning of the simulation (a dongle that was
++	** never released yet must not behave as if it just came out of
++	** cooldown). */
++	d->free_since_ms = -1000000000;
++	d->waiters_count = 0;
+ 	pthread_mutex_init(&d->lock, NULL);
+ 	pthread_cond_init(&d->cond, NULL);
+ }
+@@ -50,7 +56,7 @@
+ 	now = get_timestamp_ms(sim);
+ 	return (d->taken == 0
+ 		&& (now - d->free_since_ms) >= sim->p.dongle_cooldown
+-		&& is_my_turn(sim, dongle_idx, coder_id));
++		&& is_my_turn(sim, d, coder_id));
+ }
+ 
+ /*
+@@ -68,10 +74,10 @@
+ 	d = &sim->dongles[dongle_idx];
+ 	pthread_mutex_lock(&d->lock);
+ 	arrival = get_timestamp_ms(sim);
+-	waiter_add(dongle_idx, coder_id, arrival, deadline);
++	waiter_add(d, coder_id, arrival, deadline);
+ 	while (!is_stopped(sim) && !can_take_now(sim, dongle_idx, coder_id))
+ 		short_timed_wait(&d->cond, &d->lock);
+-	waiter_remove(dongle_idx, coder_id);
++	waiter_remove(d, coder_id);
+ 	if (is_stopped(sim))
+ 	{
+ 		pthread_mutex_unlock(&d->lock);
