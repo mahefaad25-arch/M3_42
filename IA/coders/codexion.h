@@ -44,16 +44,13 @@ typedef enum e_sched
 typedef struct s_dongle
 {
 	int				id;
-	int				taken;			/* 1 if currently held by a coder */
-	int				owner;			/* coder number currently holding it, -1 if free */
-	long			free_since_ms;	/* timestamp (relative) since it became free */
+	int				taken;
+	int				owner;
+	long			free_since_ms;
 	pthread_mutex_t	lock;
 	pthread_cond_t	cond;
 }	t_dongle;
 
-/*
-** ---- Shared simulation parameters (read only after parsing) ----
-*/
 typedef struct s_params
 {
 	int		nb_coders;
