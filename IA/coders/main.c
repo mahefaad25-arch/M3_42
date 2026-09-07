@@ -23,8 +23,8 @@ static int	start_threads(t_sim *sim, pthread_t *monitor_th)
 	i = 0;
 	while (i < sim->p.nb_coders)
 	{
-		if (pthread_create(&sim->coders[i].thread, NULL,
-				coder_routine, &sim->coders[i]) != 0)
+		if (pthread_create(&sim->coders[i].thread, NULL, coder_routine,
+				&sim->coders[i]) != 0)
 		{
 			fprintf(stderr, "codexion: failed to create coder thread\n");
 			return (-1);

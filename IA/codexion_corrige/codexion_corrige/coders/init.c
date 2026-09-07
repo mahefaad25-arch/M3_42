@@ -68,8 +68,8 @@ static int	init_coders(t_sim *sim)
 		else
 		{
 			sim->coders[i].left_dongle = i;
-			sim->coders[i].right_dongle
-				= (i - 1 + sim->p.nb_coders) % sim->p.nb_coders;
+			sim->coders[i].right_dongle = (i - 1 + sim->p.nb_coders)
+				% sim->p.nb_coders;
 		}
 		i++;
 	}

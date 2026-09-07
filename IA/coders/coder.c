@@ -48,8 +48,8 @@ static void	set_compile_start(t_coder *c, long ts)
 */
 static int	take_both_dongles(t_coder *c)
 {
-	int	first;
-	int	second;
+	int		first;
+	int		second;
 	long	deadline;
 
 	deadline = get_deadline(c);

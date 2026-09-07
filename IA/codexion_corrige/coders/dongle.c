@@ -52,8 +52,7 @@ static int	can_take_now(t_sim *sim, int dongle_idx, int coder_id)
 
 	d = &sim->dongles[dongle_idx];
 	now = get_timestamp_ms(sim);
-	return (d->taken == 0
-		&& (now - d->free_since_ms) >= sim->p.dongle_cooldown
+	return (d->taken == 0 && (now - d->free_since_ms) >= sim->p.dongle_cooldown
 		&& is_my_turn(sim, dongle_idx, coder_id));
 }
 

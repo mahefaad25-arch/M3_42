@@ -61,8 +61,7 @@ static int	parse_positive(const char *str, long *out, const char *name)
 {
 	if (!is_all_digits(str))
 	{
-		fprintf(stderr, "codexion: invalid argument for %s: '%s'\n",
-			name, str);
+		fprintf(stderr, "codexion: invalid argument for %s: '%s'\n", name, str);
 		return (-1);
 	}
 	*out = str_to_long(str);
@@ -108,10 +107,11 @@ int	parse_args(int argc, char **argv, t_params *p)
 
 	if (argc != 9)
 	{
-		fprintf(stderr, "Usage: %s number_of_coders time_to_burnout "
-			"time_to_compile time_to_debug time_to_refactor "
-			"number_of_compiles_required dongle_cooldown scheduler\n",
-			argv[0]);
+		fprintf(stderr,
+				"Usage: %s number_of_coders time_to_burnout "
+				"time_to_compile time_to_debug time_to_refactor "
+				"number_of_compiles_required dongle_cooldown scheduler\n",
+				argv[0]);
 		return (-1);
 	}
 	if (parse_positive(argv[1], &tmp, "number_of_coders") == -1)
@@ -123,8 +123,7 @@ int	parse_args(int argc, char **argv, t_params *p)
 		return (-1);
 	if (parse_positive(argv[4], &p->time_to_debug, "time_to_debug") == -1)
 		return (-1);
-	if (parse_positive(argv[5], &p->time_to_refactor,
-			"time_to_refactor") == -1)
+	if (parse_positive(argv[5], &p->time_to_refactor, "time_to_refactor") == -1)
 		return (-1);
 	if (parse_positive(argv[6], &tmp, "number_of_compiles_required") == -1)
 		return (-1);

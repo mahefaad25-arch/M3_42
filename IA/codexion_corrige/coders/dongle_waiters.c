@@ -44,8 +44,8 @@
 ** timestamp (for fifo) and its burnout deadline (for edf).
 ** Caller must already hold sim->dongles[dongle_id].lock.
 */
-void	waiter_add(t_sim *sim, int dongle_id, int coder_id,
-		long arrival, long deadline)
+void	waiter_add(t_sim *sim, int dongle_id, int coder_id, long arrival,
+		long deadline)
 {
 	t_dongle	*d;
 	int			i;
@@ -113,8 +113,8 @@ static int	find_best_waiter(t_sim *sim, int dongle_id)
 				best = i;
 		}
 		else if (d->waiters[i].deadline_ms < d->waiters[best].deadline_ms
-				|| (d->waiters[i].deadline_ms == d->waiters[best].deadline_ms
-					&& d->waiters[i].arrival_ms < d->waiters[best].arrival_ms))
+			|| (d->waiters[i].deadline_ms == d->waiters[best].deadline_ms
+				&& d->waiters[i].arrival_ms < d->waiters[best].arrival_ms))
 			best = i;
 		i++;
 	}

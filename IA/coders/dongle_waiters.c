@@ -30,21 +30,21 @@
 ** ------------------------------------------------------------------
 */
 
-# define MAX_WAITERS 1000
+#define MAX_WAITERS 1000
 
 typedef struct s_waiter
 {
-	int		coder_id;
-	long	arrival_ms;
-	long	deadline_ms;
-}	t_waiter;
+	int					coder_id;
+	long				arrival_ms;
+	long				deadline_ms;
+}						t_waiter;
 
 /* Static arrays are zero-initialized by the C standard, so every
 ** dongle's waiting list already starts empty (g_waiters_count[i]
 ** == 0): no explicit reset function is needed. */
 static t_waiter			g_waiters[MAX_WAITERS][MAX_WAITERS];
-static int					g_waiters_count[MAX_WAITERS];
-static pthread_mutex_t		g_waiters_lock = PTHREAD_MUTEX_INITIALIZER;
+static int				g_waiters_count[MAX_WAITERS];
+static pthread_mutex_t	g_waiters_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
 ** Registers a coder as waiting for a dongle, storing its arrival
@@ -112,16 +112,12 @@ static int	find_best_waiter(t_sim *sim, int dongle_id)
 			best = i;
 		else if (sim->p.scheduler == CX_SCHED_FIFO)
 		{
-			if (g_waiters[dongle_id][i].arrival_ms
-				< g_waiters[dongle_id][best].arrival_ms)
+			if (g_waiters[dongle_id][i].arrival_ms < g_waiters[dongle_id][best].arrival_ms)
 				best = i;
 		}
-		else if (g_waiters[dongle_id][i].deadline_ms
-				< g_waiters[dongle_id][best].deadline_ms
-			|| (g_waiters[dongle_id][i].deadline_ms
-					== g_waiters[dongle_id][best].deadline_ms
-				&& g_waiters[dongle_id][i].arrival_ms
-					< g_waiters[dongle_id][best].arrival_ms))
+		else if (g_waiters[dongle_id][i].deadline_ms < g_waiters[dongle_id][best].deadline_ms
+			|| (g_waiters[dongle_id][i].deadline_ms == g_waiters[dongle_id][best].deadline_ms
+				&& g_waiters[dongle_id][i].arrival_ms < g_waiters[dongle_id][best].arrival_ms))
 			best = i;
 		i++;
 	}

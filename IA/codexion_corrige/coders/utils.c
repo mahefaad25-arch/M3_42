@@ -87,4 +87,3 @@ void	set_stop(t_sim *sim, int coder_id)
 	}
 	pthread_mutex_unlock(&sim->stop_lock);
 }
-
