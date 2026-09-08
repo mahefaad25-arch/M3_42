@@ -53,10 +53,6 @@ static long	str_to_long(const char *str)
 	return (res);
 }
 
-/*
-** Parses one mandatory positive integer argument.
-** Returns 0 on success, -1 on error (prints an explicit message).
-*/
 static int	parse_positive(const char *str, long *out, const char *name)
 {
 	if (!is_all_digits(str))
@@ -92,15 +88,6 @@ static int	parse_scheduler(const char *str, t_sched *out)
 	return (-1);
 }
 
-/*
-** Entry point of the parsing module.
-** Fills the t_params structure from argv.
-** Returns 0 on success, -1 if any argument is invalid.
-**
-** Expected order:
-** number_of_coders time_to_burnout time_to_compile time_to_debug
-** time_to_refactor number_of_compiles_required dongle_cooldown scheduler
-*/
 int	parse_args(int argc, char **argv, t_params *p)
 {
 	long	tmp;

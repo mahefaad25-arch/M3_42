@@ -75,14 +75,6 @@ static int	take_both_dongles(t_coder *c)
 	return (0);
 }
 
-/*
-** Special case: with only one coder, there is only ONE dongle on
-** the table (see subject). A single dongle can never provide the
-** two hands required to compile, so the lone coder will inevitably
-** burn out. We still play the two "has taken a dongle" log lines
-** are naturally skipped since the acquisition never succeeds; the
-** monitor thread will detect the burnout.
-*/
 static int	take_dongles_single_coder(t_coder *c)
 {
 	long	deadline;
@@ -91,20 +83,12 @@ static int	take_dongles_single_coder(t_coder *c)
 	if (dongle_try_take(c->sim, c->left_dongle, c->id, deadline) == -1)
 		return (-1);
 	log_state(c->sim, c->id, "has taken a dongle");
-	/* Only one dongle exists: we cannot get a second one. We simply
-	** wait until burnout is detected by the monitor (stop flag). */
 	while (!is_stopped(c->sim))
 		ft_usleep_ms(1);
 	dongle_release(c->sim, c->left_dongle);
 	return (-1);
 }
 
-/*
-** Main loop of a coder: compile -> debug -> refactor -> repeat,
-** until either the simulation stops (burnout somewhere, or another
-** coder ended it) or this coder reached number_of_compiles_required
-** and every other coder did too (checked by the monitor).
-*/
 void	*coder_routine(void *arg)
 {
 	t_coder	*c;

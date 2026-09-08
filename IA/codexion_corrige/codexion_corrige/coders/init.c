@@ -12,12 +12,6 @@
 
 #include "codexion.h"
 
-/*
-** Allocates and initializes every dongle. As stated in the subject:
-** "There is one dongle between each pair of coders", so with N
-** coders sitting in a circle there are N dongles (one on each side).
-** With a single coder there must be exactly one dongle on the table.
-*/
 static int	init_dongles(t_sim *sim)
 {
 	int	i;

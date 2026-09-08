@@ -12,38 +12,6 @@
 
 #include "codexion.h"
 
-/*
-** ------------------------------------------------------------------
-** How the scheduler works (kept simple for a beginner algorithm):
-**
-** Every dongle owns its own waiting list, stored directly inside its
-** t_dongle structure (see codexion.h): no global variable is used,
-** as required by the subject. At most nb_coders dongles exist, but
-** at most MAX_DONGLE_WAITERS (2) coders can ever wait for one single
-** dongle at the same time (only its two neighbours can), so the
-** per-dongle waiting list is a tiny fixed-size array.
-**
-** Every access to a dongle's waiting list happens while the caller
-** already holds that dongle's mutex (dongle_try_take locks d->lock
-** before calling waiter_add/waiter_remove and before checking
-** can_take_now/is_my_turn, and only unlocks it, briefly, inside
-** short_timed_wait via pthread_cond_timedwait). This is what makes
-** it safe to have no dedicated lock for the waiting list itself.
-**
-** When a coder wants a dongle it registers itself in the waiting
-** list (arrival timestamp + its deadline = last_compile_start +
-** time_to_burnout), then waits until it is the "chosen one"
-** according to the scheduler: oldest arrival for fifo, smallest
-** deadline for edf (ties broken by arrival order, so nobody can
-** starve another coder forever).
-** ------------------------------------------------------------------
-*/
-
-/*
-** Registers a coder as waiting for a dongle, storing its arrival
-** timestamp (for fifo) and its burnout deadline (for edf).
-** Caller must already hold d->lock.
-*/
 void	waiter_add(t_dongle *d, int coder_id, long arrival, long deadline)
 {
 	int	i;

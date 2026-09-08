@@ -12,10 +12,6 @@
 
 #include "codexion.h"
 
-/*
-** Creates one thread per coder plus one monitor thread.
-** Returns 0 on success, -1 if pthread_create failed for any thread.
-*/
 static int	start_threads(t_sim *sim, pthread_t *monitor_th)
 {
 	int	i;
@@ -39,9 +35,6 @@ static int	start_threads(t_sim *sim, pthread_t *monitor_th)
 	return (0);
 }
 
-/*
-** Waits for every coder thread and the monitor thread to finish.
-*/
 static void	join_threads(t_sim *sim, pthread_t monitor_th)
 {
 	int	i;
