@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   heap.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: student <student@student.42.fr>            +#+  +:+       +#+        */
+/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/16 00:00:00 by student           #+#    #+#             */
-/*   Updated: 2026/09/16 00:00:00 by student          ###   ########.fr       */
+/*   Created: 2026/09/16 18:27:05 by bramahef          #+#    #+#             */
+/*   Updated: 2026/09/16 18:27:06 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "codexion.h"
 
