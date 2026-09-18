@@ -6,19 +6,13 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:27:17 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:27:18 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/16 23:29:59 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "codexion.h"
 
-/*
-** Creates one thread per coder, then the monitor thread.
-** "created" receives how many coder threads were actually started,
-** so we can join exactly those if a creation fails midway.
-** Returns 0 on success, -1 on failure.
-*/
 static int	start_threads(t_sim *sim, pthread_t *monitor, int *created)
 {
 	int	i;
@@ -44,9 +38,6 @@ static int	start_threads(t_sim *sim, pthread_t *monitor, int *created)
 	return (0);
 }
 
-/*
-** Joins the "count" coder threads that were started.
-*/
 static void	join_coders(t_sim *sim, int count)
 {
 	int	i;

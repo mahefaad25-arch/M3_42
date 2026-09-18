@@ -6,7 +6,7 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:26:39 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:26:40 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/16 23:54:01 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,12 +69,6 @@ static void	single_coder_case(t_coder *c)
 	dongle_release(c->sim, c->first_dongle);
 }
 
-/*
-** Life of a coder: compile (two dongles), debug, refactor, repeat.
-** Loops until the simulation is stopped, either because someone
-** burned out or because every coder reached the required number of
-** compiles (both decided by the monitor thread).
-*/
 void	*coder_routine(void *arg)
 {
 	t_coder	*c;
@@ -90,6 +84,8 @@ void	*coder_routine(void *arg)
 		if (take_both_dongles(c) == -1)
 			break ;
 		do_compile(c);
+		if (is_stopped(c->sim))
+			break ;
 		do_debug_and_refactor(c);
 	}
 	return (NULL);

@@ -23,7 +23,7 @@ int	dongle_init(t_dongle *d, int id, int capacity, t_sched policy)
 	d->id = id;
 	d->taken = 0;
 	d->owner = -1;
-	d->free_since_ms = 0;
+	d->free_since_ms = -1;
 	if (heap_init(&d->queue, capacity, policy) == -1)
 		return (-1);
 	pthread_mutex_init(&d->lock, NULL);
@@ -45,7 +45,8 @@ void	dongle_destroy(t_dongle *d)
 /*
 ** Returns 1 when the dongle can be handed to this coder right now:
 **   - nobody holds it,
-**   - its cooldown has fully elapsed since it was released,
+**   - it was never released yet, or its cooldown has fully elapsed
+**     since the last time it was released,
 **   - and the scheduler designates this coder (root of the heap).
 ** The caller must already hold the dongle's mutex.
 */
@@ -57,7 +58,8 @@ static int	can_take_now(t_sim *sim, int idx, int coder_id)
 	d = &sim->dongles[idx];
 	now = get_timestamp_ms(sim);
 	return (d->taken == 0
-		&& (now - d->free_since_ms) >= sim->p.dongle_cooldown
+		&& (d->free_since_ms == -1
+			|| (now - d->free_since_ms) >= sim->p.dongle_cooldown)
 		&& heap_top_id(&d->queue) == coder_id);
 }
 

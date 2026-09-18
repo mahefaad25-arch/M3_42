@@ -6,7 +6,7 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:26:33 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:26:34 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/18 14:19:51 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ void	do_compile(t_coder *c)
 {
 	pthread_mutex_lock(&c->deadline_lock);
 	c->last_compile_start = get_timestamp_ms(c->sim);
+	c->phase = CX_COMPILING;
 	pthread_mutex_unlock(&c->deadline_lock);
 	log_state(c->sim, c->id, "is compiling");
 	ft_usleep_ms(c->sim, c->sim->p.time_to_compile);
@@ -40,8 +41,14 @@ void	do_compile(t_coder *c)
 */
 void	do_debug_and_refactor(t_coder *c)
 {
+	pthread_mutex_lock(&c->deadline_lock);
+	c->phase = CX_DEBUGGING;
+	pthread_mutex_unlock(&c->deadline_lock);
 	log_state(c->sim, c->id, "is debugging");
 	ft_usleep_ms(c->sim, c->sim->p.time_to_debug);
+	pthread_mutex_lock(&c->deadline_lock);
+	c->phase = CX_REFACTORING;
+	pthread_mutex_unlock(&c->deadline_lock);
 	log_state(c->sim, c->id, "is refactoring");
 	ft_usleep_ms(c->sim, c->sim->p.time_to_refactor);
 }

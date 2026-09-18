@@ -6,7 +6,7 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:27:11 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:27:12 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/18 14:17:34 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,7 @@ static int	init_coders(t_sim *sim)
 		sim->coders[i].nb_compiles = 0;
 		sim->coders[i].last_compile_start = 0;
 		sim->coders[i].sim = sim;
+		sim->coders[i].phase = CX_IDLE;
 		pthread_mutex_init(&sim->coders[i].deadline_lock, NULL);
 		assign_dongles(&sim->coders[i], i, sim->p.nb_coders);
 		i++;

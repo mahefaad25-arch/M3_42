@@ -6,7 +6,7 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 00:00:00 by student           #+#    #+#             */
-/*   Updated: 2026/09/16 18:26:47 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/18 14:17:27 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,17 @@ typedef struct s_sim
 }	t_sim;
 
 /*
+** Coder phases
+*/
+typedef enum e_coder_phase
+{
+	CX_IDLE,
+	CX_COMPILING,
+	CX_DEBUGGING,
+	CX_REFACTORING
+}	t_coder_phase;
+
+/*
 ** One coder = one thread.
 ** "last_compile_start" is written by the coder and read by the
 ** monitor, so it has its own mutex.
@@ -119,6 +130,7 @@ typedef struct s_coder
 	t_sim			*sim;
 	int				first_dongle;
 	int				second_dongle;
+	t_coder_phase	phase;
 }	t_coder;
 
 /* parsing.c */
