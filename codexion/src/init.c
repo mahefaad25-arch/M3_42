@@ -112,6 +112,9 @@ int	sim_init(t_sim *sim, t_params *p)
 	gettimeofday(&sim->start_time, NULL);
 	pthread_mutex_init(&sim->log_lock, NULL);
 	pthread_mutex_init(&sim->stop_lock, NULL);
+	pthread_mutex_init(&sim->startup_lock, NULL);
+	pthread_cond_init(&sim->startup_cond, NULL);
+	sim->startup_released = (p->nb_coders == 1);
 	if (init_dongles(sim) == -1)
 		return (-1);
 	if (init_coders(sim) == -1)
@@ -139,6 +142,8 @@ void	sim_destroy(t_sim *sim)
 	}
 	pthread_mutex_destroy(&sim->log_lock);
 	pthread_mutex_destroy(&sim->stop_lock);
+	pthread_mutex_destroy(&sim->startup_lock);
+	pthread_cond_destroy(&sim->startup_cond);
 	free(sim->dongles);
 	free(sim->coders);
 }

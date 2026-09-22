@@ -99,7 +99,7 @@ void	*monitor_routine(void *arg)
 			break ;
 		if (all_compiled_enough(sim))
 		{
-			set_stop(sim, -1);
+			set_completed(sim);
 			break ;
 		}
 		usleep(500);

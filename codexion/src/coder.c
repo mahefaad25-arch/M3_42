@@ -64,7 +64,7 @@ static void	single_coder_case(t_coder *c)
 	if (dongle_try_take(c->sim, c->first_dongle, c->id, get_deadline(c)) == -1)
 		return ;
 	log_state(c->sim, c->id, "has taken a dongle");
-	while (!is_stopped(c->sim))
+	while (!is_burned(c->sim) && !is_completed(c->sim))
 		usleep(500);
 	dongle_release(c->sim, c->first_dongle);
 }
@@ -79,7 +79,7 @@ void	*coder_routine(void *arg)
 		single_coder_case(c);
 		return (NULL);
 	}
-	while (!is_stopped(c->sim))
+	while (!is_burned(c->sim) && !is_completed(c->sim))
 	{
 		if (take_both_dongles(c) == -1)
 			break ;

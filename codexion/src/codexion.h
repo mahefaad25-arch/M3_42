@@ -100,6 +100,9 @@ typedef struct s_sim
 	struct s_coder	*coders;
 	pthread_mutex_t	log_lock;
 	pthread_mutex_t	stop_lock;
+	pthread_mutex_t	startup_lock;
+	pthread_cond_t	startup_cond;
+	int				startup_released;
 	int				stop;
 	int				burned_coder;
 }	t_sim;
@@ -142,6 +145,9 @@ long	get_timestamp_ms(t_sim *sim);
 void	log_state(t_sim *sim, int coder_id, const char *msg);
 int		is_stopped(t_sim *sim);
 void	set_stop(t_sim *sim, int coder_id);
+int		is_burned(t_sim *sim);
+int		is_completed(t_sim *sim);
+void	set_completed(t_sim *sim);
 
 /* time_utils.c */
 void	ft_usleep_ms(t_sim *sim, long ms);

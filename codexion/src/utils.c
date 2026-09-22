@@ -49,7 +49,7 @@ void	log_state(t_sim *sim, int coder_id, const char *msg)
 	long	ts;
 
 	pthread_mutex_lock(&sim->log_lock);
-	if (is_stopped(sim) && strcmp(msg, "burned out") != 0)
+	if (is_burned(sim) && strcmp(msg, "burned out") != 0)
 	{
 		pthread_mutex_unlock(&sim->log_lock);
 		return ;
@@ -84,5 +84,34 @@ void	set_stop(t_sim *sim, int coder_id)
 		sim->stop = 1;
 		sim->burned_coder = coder_id;
 	}
+	pthread_mutex_unlock(&sim->stop_lock);
+}
+
+
+int	is_burned(t_sim *sim)
+{
+	int val;
+
+	pthread_mutex_lock(&sim->stop_lock);
+	val = (sim->stop == 1);
+	pthread_mutex_unlock(&sim->stop_lock);
+	return (val);
+}
+
+int	is_completed(t_sim *sim)
+{
+	int val;
+
+	pthread_mutex_lock(&sim->stop_lock);
+	val = (sim->stop == 2);
+	pthread_mutex_unlock(&sim->stop_lock);
+	return (val);
+}
+
+void	set_completed(t_sim *sim)
+{
+	pthread_mutex_lock(&sim->stop_lock);
+	if (sim->stop == 0)
+		sim->stop = 2;
 	pthread_mutex_unlock(&sim->stop_lock);
 }

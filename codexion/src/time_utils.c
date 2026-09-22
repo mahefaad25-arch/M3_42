@@ -26,7 +26,7 @@ void	ft_usleep_ms(t_sim *sim, long ms)
 	start = get_timestamp_ms(sim);
 	while (get_timestamp_ms(sim) - start < ms)
 	{
-		if (is_stopped(sim))
+		if (is_burned(sim))
 			return ;
 		usleep(500);
 	}

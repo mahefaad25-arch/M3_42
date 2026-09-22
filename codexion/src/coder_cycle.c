@@ -52,3 +52,25 @@ void	do_debug_and_refactor(t_coder *c)
 	log_state(c->sim, c->id, "is refactoring");
 	ft_usleep_ms(c->sim, c->sim->p.time_to_refactor);
 }
+
+
+void	release_startup(t_sim *sim)
+{
+	pthread_mutex_lock(&sim->startup_lock);
+	if (!sim->startup_released)
+	{
+		sim->startup_released = 1;
+		pthread_cond_broadcast(&sim->startup_cond);
+	}
+	pthread_mutex_unlock(&sim->startup_lock);
+}
+
+void	wait_startup(t_coder *c)
+{
+	if (c->id == 1)
+		return ;
+	pthread_mutex_lock(&c->sim->startup_lock);
+	while (!c->sim->startup_released && !is_burned(c->sim))
+		pthread_cond_wait(&c->sim->startup_cond, &c->sim->startup_lock);
+	pthread_mutex_unlock(&c->sim->startup_lock);
+}
