@@ -6,7 +6,7 @@
 /*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:26:39 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 23:54:01 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/22 15:55:53 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,9 +84,9 @@ void	*coder_routine(void *arg)
 		if (take_both_dongles(c) == -1)
 			break ;
 		do_compile(c);
+		do_debug_and_refactor(c);
 		if (is_stopped(c->sim))
 			break ;
-		do_debug_and_refactor(c);
 	}
 	return (NULL);
 }
