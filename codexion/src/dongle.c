@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dongle.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
+/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:26:50 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:26:51 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/23 16:58:40 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

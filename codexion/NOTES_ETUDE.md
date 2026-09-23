@@ -206,3 +206,26 @@ dès `t=0` dans les tests.
 
 Aucun autre fichier n'a été modifié. Voir les patchs `diff_*.patch` fournis
 pour le détail ligne par ligne.
+
+
+1. Pourquoi pthread ?
+   → Un thread par coder.
+
+2. Pourquoi mutex ?
+   → Protéger les dongles et les données partagées.
+
+3. Pourquoi condition variable ?
+   → Permettre aux threads d'attendre/signaler efficacement.
+
+4. Pourquoi heap ?
+   → Implémenter FIFO/EDF pour arbitrer les demandes.
+
+5. Comment fonctionne EDF ?
+   → deadline = last_compile_start + time_to_burnout.
+
+6. Comment détecter le burnout ?
+   → Un monitor surveille les deadlines.
+
+7. Quand le programme s'arrête ?
+   → Burnout OU tous les coders ont atteint
+     number_of_compiles_required.
