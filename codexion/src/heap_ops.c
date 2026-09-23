@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "codexion.h"
 
 /*
@@ -46,11 +45,11 @@ void	heap_sift_down(t_heap *heap, int i)
 	{
 		best = i;
 		left = 2 * i + 1;
-		if (left < heap->size
-			&& req_is_before(heap, &heap->data[left], &heap->data[best]))
+		if (left < heap->size && req_is_before(heap, &heap->data[left],
+				&heap->data[best]))
 			best = left;
-		if (left + 1 < heap->size
-			&& req_is_before(heap, &heap->data[left + 1], &heap->data[best]))
+		if (left + 1 < heap->size && req_is_before(heap, &heap->data[left + 1],
+				&heap->data[best]))
 			best = left + 1;
 		if (best == i)
 			break ;

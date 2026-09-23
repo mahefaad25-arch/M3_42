@@ -3,13 +3,12 @@
 /*                                                        :::      ::::::::   */
 /*   monitor.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
+/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:27:26 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:27:27 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/23 07:32:03 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "codexion.h"
 

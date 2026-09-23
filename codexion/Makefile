@@ -8,7 +8,8 @@ OBJ_DIR		= obj
 
 SRCS		= main.c \
 			  parsing.c \
-			  utils.c \
+			  utils1.c \
+			  utils2.c \
 			  time_utils.c \
 			  heap.c \
 			  heap_ops.c \

@@ -1,15 +1,14 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.c                                            :+:      :+:    :+:   */
+/*   utils1.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
+/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:27:42 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:27:43 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/23 07:32:40 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "codexion.h"
 
@@ -84,34 +83,5 @@ void	set_stop(t_sim *sim, int coder_id)
 		sim->stop = 1;
 		sim->burned_coder = coder_id;
 	}
-	pthread_mutex_unlock(&sim->stop_lock);
-}
-
-
-int	is_burned(t_sim *sim)
-{
-	int val;
-
-	pthread_mutex_lock(&sim->stop_lock);
-	val = (sim->stop == 1);
-	pthread_mutex_unlock(&sim->stop_lock);
-	return (val);
-}
-
-int	is_completed(t_sim *sim)
-{
-	int val;
-
-	pthread_mutex_lock(&sim->stop_lock);
-	val = (sim->stop == 2);
-	pthread_mutex_unlock(&sim->stop_lock);
-	return (val);
-}
-
-void	set_completed(t_sim *sim)
-{
-	pthread_mutex_lock(&sim->stop_lock);
-	if (sim->stop == 0)
-		sim->stop = 2;
 	pthread_mutex_unlock(&sim->stop_lock);
 }

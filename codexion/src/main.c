@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "codexion.h"
 
 static int	start_threads(t_sim *sim, pthread_t *monitor, int *created)
@@ -20,8 +19,8 @@ static int	start_threads(t_sim *sim, pthread_t *monitor, int *created)
 	i = 0;
 	while (i < sim->p.nb_coders)
 	{
-		if (pthread_create(&sim->coders[i].thread, NULL,
-				coder_routine, &sim->coders[i]) != 0)
+		if (pthread_create(&sim->coders[i].thread, NULL, coder_routine,
+				&sim->coders[i]) != 0)
 		{
 			*created = i;
 			fprintf(stderr, "codexion: cannot create coder thread\n");

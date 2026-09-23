@@ -19,7 +19,7 @@ echo   [6] Component Cleanup       [15] Memory Diagnostic
 echo   [7] Drive Health            [16] Advanced Startup
 echo   [8] Flush DNS               [17] Windows Update
 echo   [9] Reset Winsock           [18] Full Report
-echo   [Q] Exit
+echo   [Q] Exit                    [19] Logiciel Update
 echo.
 echo ================================================================
 echo.
@@ -43,6 +43,7 @@ if /i "%choice%"=="15" goto MEMORY
 if /i "%choice%"=="16" goto ADVANCED
 if /i "%choice%"=="17" goto UPDATE
 if /i "%choice%"=="18" goto FULLREPORT
+if /i "%choice%"=="19" goto LOGICIELUPDATE
 if /i "%choice%"=="Q"  goto EXIT
 
 echo.

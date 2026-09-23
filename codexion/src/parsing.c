@@ -3,13 +3,12 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
+/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 18:27:32 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/16 18:27:33 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/09/23 07:33:10 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "codexion.h"
 
@@ -101,10 +100,12 @@ int	parse_args(int argc, char **argv, t_params *p)
 	long	tmp;
 
 	if (argc != 9)
-		return (fprintf(stderr, "Usage: %s number_of_coders time_to_burnout "
+		return (fprintf(stderr,
+				"Usage: %s number_of_coders time_to_burnout "
 				"time_to_compile time_to_debug time_to_refactor "
 				"number_of_compiles_required dongle_cooldown "
-				"scheduler\n", argv[0]), -1);
+				"scheduler\n",
+				argv[0]), -1);
 	if (parse_value(argv[1], &tmp, "number_of_coders") == -1)
 		return (-1);
 	p->nb_coders = (int)tmp;

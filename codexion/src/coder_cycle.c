@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "codexion.h"
 
 /*
@@ -52,7 +51,6 @@ void	do_debug_and_refactor(t_coder *c)
 	log_state(c->sim, c->id, "is refactoring");
 	ft_usleep_ms(c->sim, c->sim->p.time_to_refactor);
 }
-
 
 void	release_startup(t_sim *sim)
 {

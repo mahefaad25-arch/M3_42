@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "codexion.h"
 
 /*
@@ -57,9 +56,8 @@ static int	can_take_now(t_sim *sim, int idx, int coder_id)
 
 	d = &sim->dongles[idx];
 	now = get_timestamp_ms(sim);
-	return (d->taken == 0
-		&& (d->free_since_ms == -1
-			|| (now - d->free_since_ms) >= sim->p.dongle_cooldown)
+	return (d->taken == 0 && (d->free_since_ms == -1 || (now
+				- d->free_since_ms) >= sim->p.dongle_cooldown)
 		&& heap_top_id(&d->queue) == coder_id);
 }
 
