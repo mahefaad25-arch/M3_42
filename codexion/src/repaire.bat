@@ -13,7 +13,7 @@ echo.
 echo   [1] System Info             [10] Reset TCP/IP
 echo   [2] SFC Scan                [11] Battery Report
 echo   [3] SFC Verify              [12] Performance Report
-echo   [4] DISM Scan              [13] WinRE Info
+echo   [4] DISM Scan               [13] WinRE Info
 echo   [5] DISM Repair             [14] System Restore
 echo   [6] Component Cleanup       [15] Memory Diagnostic
 echo   [7] Drive Health            [16] Advanced Startup
@@ -23,7 +23,7 @@ echo   [Q] Exit                    [19] Logiciel Update
 echo.
 echo ================================================================
 echo.
-set /p "choice=Select [1-18/Q]: "
+set /p "choice=Select [1-19/Q]: "
 
 if /i "%choice%"=="1"  goto SYSTEMINFO
 if /i "%choice%"=="2"  goto SFCSCAN
@@ -121,6 +121,7 @@ goto MENU
 cls
 echo === FLUSH DNS ===
 echo.
+call :CHECKNET
 ipconfig /flushdns
 pause
 goto MENU
@@ -228,6 +229,7 @@ goto EXIT
 cls
 echo === WINDOWS UPDATE ===
 echo.
+call :CHECKNET
 echo Opening Windows Update...
 echo.
 
@@ -272,6 +274,33 @@ echo.
 echo Report completed.
 pause
 goto MENU
+
+
+:LOGICIELUPDATE
+cls
+echo === LOGICIEL UPDATE ===
+echo.
+call :CHECKNET
+echo Checking for updates...
+echo.
+winget upgrade --all
+echo Update check completed.
+pause
+goto MENU
+
+
+:: --- FONCTION DE CHECK CONNEXION ---
+:CHECKNET
+echo Verification de la connexion Internet...
+ping -n 1 8.8.8.8 >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo [X] Erreur : Pas d'acces Internet. Operation annulee.
+    echo.
+    pause
+    goto MENU
+)
+goto :eof
 
 
 :EXIT
