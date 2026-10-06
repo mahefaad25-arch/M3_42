@@ -45,7 +45,7 @@ void	dongle_destroy(t_dongle *d)
 ** Returns 1 when the dongle can be handed to this coder right now:
 **   - nobody holds it,
 **   - it was never released yet, or its cooldown has fully elapsed
-**     since the last time it was released,
+**     since the last time it was released,`
 **   - and the scheduler designates this coder (root of the heap).
 ** The caller must already hold the dongle's mutex.
 */
@@ -71,10 +71,13 @@ static int	can_take_now(t_sim *sim, int idx, int coder_id)
 int	dongle_try_take(t_sim *sim, int idx, int coder_id, long deadline)
 {
 	t_dongle	*d;
+	t_coder		*c;
 
 	d = &sim->dongles[idx];
+	c = &sim->coders[coder_id - 1];
 	pthread_mutex_lock(&d->lock);
-	heap_push(&d->queue, coder_id, get_timestamp_ms(sim), deadline);
+	if (c->nb_compiles != 0 || idx != c->first_dongle)
+		heap_push(&d->queue, coder_id, get_timestamp_ms(sim), deadline);
 	while (!is_stopped(sim) && !can_take_now(sim, idx, coder_id))
 		short_timed_wait(&d->cond, &d->lock);
 	heap_remove(&d->queue, coder_id);

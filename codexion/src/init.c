@@ -105,6 +105,8 @@ static int	init_coders(t_sim *sim)
 */
 int	sim_init(t_sim *sim, t_params *p)
 {
+	int	i;
+
 	sim->p = *p;
 	sim->stop = 0;
 	sim->burned_coder = -1;
@@ -120,6 +122,13 @@ int	sim_init(t_sim *sim, t_params *p)
 	{
 		free(sim->dongles);
 		return (-1);
+	}
+	i = 0;
+	while (i < sim->p.nb_coders)
+	{
+		heap_push(&sim->dongles[sim->coders[i].first_dongle].queue,
+			sim->coders[i].id, -1, sim->p.time_to_burnout);
+		i++;
 	}
 	return (0);
 }

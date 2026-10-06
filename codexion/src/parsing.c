@@ -66,11 +66,16 @@ static int	parse_value(const char *s, long *out, const char *name)
 		fprintf(stderr, "codexion: invalid value for %s: '%s'\n", name, s);
 		return (-1);
 	}
-	if (*out == 0)
-	{
-		fprintf(stderr, "codexion: %s must be strictly positive\n", name);
-		return (-1);
-	}
+	if (*out <= 0 && (strcmp(name, "number_of_coders") == 0 || strcmp(name, "time_to_burnout") == 0))
+    {
+        fprintf(stderr, "codexion: %s must be strictly higher than 0\n", name);
+        return (-1);
+    }
+    else if (*out < 0)
+    {
+        fprintf(stderr, "codexion: %s must be positive\n", name);
+        return (-1);
+    }
 	return (0);
 }
 
