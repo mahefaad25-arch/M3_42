@@ -1,80 +1,49 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   init.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/16 18:27:11 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/18 14:17:34 by bramahef         ###   ########.fr       */
+/*                                                        :::      ::::::::  */
+/*   init.c                                            :+:      :+:    :+:  */
+/*                                                    +:+ +:+         +:+    */
+/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
+/*                                                +#+#+#+#+#+   +#+         */
+/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
+/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
 /*
-** Allocates the dongles. There are as many dongles as coders (one
-** between each pair of neighbours), and exactly one dongle when
-** there is a single coder.
-** Each dongle gets its own priority queue sized for the worst case.
+** Allocates and initializes every dongle. As stated in the subject:
+** "There is one dongle between each pair of coders", so with N
+** coders sitting in a circle there are N dongles (one on each side).
+** With a single coder there must be exactly one dongle on the table.
 */
 static int	init_dongles(t_sim *sim)
 {
 	int	i;
+	int	nb_dongles;
 
-	sim->dongles = malloc(sizeof(t_dongle) * sim->p.nb_coders);
+	nb_dongles = sim->p.nb_coders;
+	sim->dongles = malloc(sizeof(t_dongle) * nb_dongles);
 	if (sim->dongles == NULL)
 		return (-1);
 	i = 0;
-	while (i < sim->p.nb_coders)
+	while (i < nb_dongles)
 	{
-		if (dongle_init(&sim->dongles[i], i, sim->p.nb_coders,
-				sim->p.scheduler) == -1)
-		{
-			while (--i >= 0)
-				dongle_destroy(&sim->dongles[i]);
-			free(sim->dongles);
-			return (-1);
-		}
+		dongle_init(&sim->dongles[i], i);
 		i++;
 	}
 	return (0);
 }
 
 /*
-** Gives coder i (0-indexed, number i + 1) its two dongles.
-** Left is i, right is (i - 1 + n) % n, which matches the circular
-** seating of the subject. We then store them sorted by index
-** (first < second) so that every coder acquires them in the same
-** global order: this is the deadlock prevention.
-*/
-static void	assign_dongles(t_coder *c, int i, int n)
-{
-	int	left;
-	int	right;
-
-	left = i;
-	right = (i - 1 + n) % n;
-	if (n == 1)
-	{
-		c->first_dongle = 0;
-		c->second_dongle = 0;
-		return ;
-	}
-	if (left < right)
-	{
-		c->first_dongle = left;
-		c->second_dongle = right;
-	}
-	else
-	{
-		c->first_dongle = right;
-		c->second_dongle = left;
-	}
-}
-
-/*
-** Allocates and initializes the coders.
+** Allocates and initializes every coder. Coder i (0-indexed) has
+** number i + 1. Its left dongle is at index i, its right dongle is
+** at index (i - 1 + nb_coders) % nb_coders, which reproduces the
+** classic circular seating described in the subject: coder 1 sits
+** next to coder number_of_coders, coder N sits between N-1 and N+1.
+** In the single-coder case both hands reach for the very same
+** unique dongle.
 */
 static int	init_coders(t_sim *sim)
 {
@@ -89,33 +58,40 @@ static int	init_coders(t_sim *sim)
 		sim->coders[i].id = i + 1;
 		sim->coders[i].nb_compiles = 0;
 		sim->coders[i].last_compile_start = 0;
-		sim->coders[i].sim = sim;
-		sim->coders[i].phase = CX_IDLE;
 		pthread_mutex_init(&sim->coders[i].deadline_lock, NULL);
-		assign_dongles(&sim->coders[i], i, sim->p.nb_coders);
+		sim->coders[i].sim = sim;
+		if (sim->p.nb_coders == 1)
+		{
+			sim->coders[i].left_dongle = 0;
+			sim->coders[i].right_dongle = 0;
+		}
+		else
+		{
+			sim->coders[i].left_dongle = i;
+			sim->coders[i].right_dongle
+				= (i - 1 + sim->p.nb_coders) % sim->p.nb_coders;
+		}
 		i++;
 	}
 	return (0);
 }
 
 /*
-** Builds the whole simulation state. Everything lives in this
-** structure, passed by pointer to the threads, so the program never
-** needs a global variable (forbidden by the subject).
+** Sets up the whole simulation state: parameters, start time,
+** dongles, coders and the mutexes protecting shared resources
+** (log output and the stop flag).
+** Returns 0 on success, -1 on allocation failure.
 */
 int	sim_init(t_sim *sim, t_params *p)
 {
 	int	i;
 
 	sim->p = *p;
-	sim->stop = 0;
-	sim->burned_coder = -1;
 	gettimeofday(&sim->start_time, NULL);
+	sim->stop = 0;
+	sim->stop_reason_coder = -1;
 	pthread_mutex_init(&sim->log_lock, NULL);
 	pthread_mutex_init(&sim->stop_lock, NULL);
-	pthread_mutex_init(&sim->startup_lock, NULL);
-	pthread_cond_init(&sim->startup_cond, NULL);
-	sim->startup_released = (p->nb_coders == 1);
 	if (init_dongles(sim) == -1)
 		return (-1);
 	if (init_coders(sim) == -1)
@@ -134,8 +110,8 @@ int	sim_init(t_sim *sim, t_params *p)
 }
 
 /*
-** Frees everything: dongle queues, mutexes, condition variables and
-** the two arrays. No memory leak is left behind.
+** Releases every resource allocated by sim_init: destroys all
+** mutexes/condition variables and frees the dongle and coder arrays.
 */
 void	sim_destroy(t_sim *sim)
 {
@@ -150,8 +126,6 @@ void	sim_destroy(t_sim *sim)
 	}
 	pthread_mutex_destroy(&sim->log_lock);
 	pthread_mutex_destroy(&sim->stop_lock);
-	pthread_mutex_destroy(&sim->startup_lock);
-	pthread_cond_destroy(&sim->startup_cond);
 	free(sim->dongles);
 	free(sim->coders);
 }

@@ -1,76 +1,84 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   dongle.c                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/16 18:26:50 by bramahef          #+#    #+#             */
-/*   Updated: 2026/09/23 16:58:40 by bramahef         ###   ########.fr       */
+/*                                                        :::      ::::::::  */
+/*   dongle.c                                          :+:      :+:    :+:  */
+/*                                                    +:+ +:+         +:+    */
+/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
+/*                                                +#+#+#+#+#+   +#+         */
+/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
+/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
 /*
-** Initializes one dongle: free, no owner, empty priority queue,
-** mutex and condition variable ready.
-** Returns 0 on success, -1 if the queue could not be allocated.
+** Initializes one dongle: free, no owner, mutex/cond ready. Its
+** waiting list (see dongle_waiters.c) starts empty automatically,
+** since it is a static array zero-initialized by the C standard.
 */
-int	dongle_init(t_dongle *d, int id, int capacity, t_sched policy)
+void	dongle_init(t_dongle *d, int id)
 {
 	d->id = id;
 	d->taken = 0;
 	d->owner = -1;
-	d->free_since_ms = -1;
-	if (heap_init(&d->queue, capacity, policy) == -1)
-		return (-1);
+	/* Sentinel far in the past: guarantees the cooldown check in
+	** can_take_now() never blocks the very first acquisition of a
+	** dongle at the beginning of the simulation (a dongle that was
+	** never released yet must not behave as if it just came out of
+	** cooldown). */
+	d->free_since_ms = -1000000000;
+	d->waiters_count = 0;
 	pthread_mutex_init(&d->lock, NULL);
 	pthread_cond_init(&d->cond, NULL);
-	return (0);
 }
 
 /*
-** Destroys a dongle: frees its queue, its mutex and its condition
-** variable.
+** Destroys a dongle's mutex and condition variable.
 */
 void	dongle_destroy(t_dongle *d)
 {
-	heap_destroy(&d->queue);
 	pthread_mutex_destroy(&d->lock);
 	pthread_cond_destroy(&d->cond);
 }
 
 /*
+<<<<<<< HEAD
 ** Returns 1 when the dongle can be handed to this coder right now:
 **   - nobody holds it,
 **   - it was never released yet, or its cooldown has fully elapsed
 **     since the last time it was released,`
 **   - and the scheduler designates this coder (root of the heap).
 ** The caller must already hold the dongle's mutex.
+=======
+** Returns 1 if the dongle can be granted to this coder right now:
+** it must be free, its cooldown must have elapsed, and it must be
+** this coder's turn according to the scheduler.
+>>>>>>> 1f331d8 (Add dongle waiters management and utility functions)
 */
-static int	can_take_now(t_sim *sim, int idx, int coder_id)
+static int	can_take_now(t_sim *sim, int dongle_idx, int coder_id)
 {
 	t_dongle	*d;
 	long		now;
 
-	d = &sim->dongles[idx];
+	d = &sim->dongles[dongle_idx];
 	now = get_timestamp_ms(sim);
-	return (d->taken == 0 && (d->free_since_ms == -1 || (now
-				- d->free_since_ms) >= sim->p.dongle_cooldown)
-		&& heap_top_id(&d->queue) == coder_id);
+	return (d->taken == 0
+		&& (now - d->free_since_ms) >= sim->p.dongle_cooldown
+		&& is_my_turn(sim, d, coder_id));
 }
 
 /*
-** Requests one dongle and blocks until it is granted.
-** The request (arrival time + burnout deadline) is pushed into the
-** dongle's priority queue, so the arbitration follows fifo or edf.
-** Returns 0 once the dongle is held, -1 if the simulation stopped
-** while waiting (the coder then owns nothing).
+** Tries to take one dongle. Blocks (waiting on the condition
+** variable) until the dongle is free, its cooldown elapsed and it
+** is this coder's turn according to the scheduler.
+** "deadline" is the coder's current burnout deadline, used by edf.
+** Returns 0 on success, -1 if the simulation stopped meanwhile.
 */
-int	dongle_try_take(t_sim *sim, int idx, int coder_id, long deadline)
+int	dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline)
 {
 	t_dongle	*d;
+<<<<<<< HEAD
 	t_coder		*c;
 
 	d = &sim->dongles[idx];
@@ -79,11 +87,19 @@ int	dongle_try_take(t_sim *sim, int idx, int coder_id, long deadline)
 	if (c->nb_compiles != 0 || idx != c->first_dongle)
 		heap_push(&d->queue, coder_id, get_timestamp_ms(sim), deadline);
 	while (!is_stopped(sim) && !can_take_now(sim, idx, coder_id))
+=======
+	long		arrival;
+
+	d = &sim->dongles[dongle_idx];
+	pthread_mutex_lock(&d->lock);
+	arrival = get_timestamp_ms(sim);
+	waiter_add(d, coder_id, arrival, deadline);
+	while (!is_stopped(sim) && !can_take_now(sim, dongle_idx, coder_id))
+>>>>>>> 1f331d8 (Add dongle waiters management and utility functions)
 		short_timed_wait(&d->cond, &d->lock);
-	heap_remove(&d->queue, coder_id);
+	waiter_remove(d, coder_id);
 	if (is_stopped(sim))
 	{
-		pthread_cond_broadcast(&d->cond);
 		pthread_mutex_unlock(&d->lock);
 		return (-1);
 	}
@@ -94,15 +110,14 @@ int	dongle_try_take(t_sim *sim, int idx, int coder_id, long deadline)
 }
 
 /*
-** Releases a dongle: it becomes free, we remember when (that is
-** what starts its cooldown) and we wake every waiting coder so the
-** next one designated by the scheduler can take it.
+** Releases a dongle: marks it free, stores the release timestamp
+** (used for the cooldown) and wakes up every coder waiting for it.
 */
-void	dongle_release(t_sim *sim, int idx)
+void	dongle_release(t_sim *sim, int dongle_idx)
 {
 	t_dongle	*d;
 
-	d = &sim->dongles[idx];
+	d = &sim->dongles[dongle_idx];
 	pthread_mutex_lock(&d->lock);
 	d->taken = 0;
 	d->owner = -1;

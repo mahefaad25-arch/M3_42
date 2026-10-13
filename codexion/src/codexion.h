@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   codexion.h                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: bramahef < bramahef@student.42antananar    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/16 00:00:00 by student           #+#    #+#             */
-/*   Updated: 2026/09/18 14:17:27 by bramahef         ###   ########.fr       */
+/*                                                        :::      ::::::::  */
+/*   codexion.h                                        :+:      :+:    :+:  */
+/*                                                    +:+ +:+         +:+    */
+/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
+/*                                                +#+#+#+#+#+   +#+         */
+/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
+/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,60 +21,57 @@
 # include <unistd.h>
 
 /*
-** Scheduler policy used by a dongle to pick who it serves next.
-** CX_FIFO : First In, First Out (smallest arrival timestamp).
-** CX_EDF  : Earliest Deadline First
-**           deadline = last_compile_start + time_to_burnout
+** ---- Scheduler policy for the dongles ----
+** FIFO : first request in, first served
+** EDF  : Earliest Deadline First
+** deadline = last_compile_start + time_to_burnout
 */
 typedef enum e_sched
 {
-	CX_FIFO,
-	CX_EDF
+	CX_SCHED_FIFO,
+	CX_SCHED_EDF
 }	t_sched;
 
 /*
-** One pending request for a dongle: who asks, when it asked, and
-** what its burnout deadline is. This is the element stored in the
-** priority queue (binary heap) of each dongle.
+** ---- Waiting list entry for one dongle ----
+** At most two coders can ever wait for a given dongle at the same
+** time: its left neighbour and its right neighbour (the topology
+** guarantees this, see init_coders). We size the waiting list to
+** that exact bound instead of a value unrelated to nb_coders.
 */
-typedef struct s_req
+# define MAX_DONGLE_WAITERS 2
+
+typedef struct s_waiter
 {
 	int		coder_id;
 	long	arrival_ms;
 	long	deadline_ms;
-}	t_req;
+}	t_waiter;
 
 /*
-** Binary heap (min-heap) used as the priority queue of a dongle.
-** The ordering depends on the scheduler policy: see req_is_before().
-** Memory is malloc'ed at init and freed at the end (no leaks).
-*/
-typedef struct s_heap
-{
-	t_req	*data;
-	int		size;
-	int		capacity;
-	t_sched	policy;
-}	t_heap;
-
-/*
-** One dongle on the table. Its whole state (taken/owner/cooldown
-** timestamp) AND its waiting queue are protected by "lock".
-** Waiting coders sleep on "cond" and are woken when it is released.
+** ---- One dongle on the table ----
+** A dongle can be taken by only one coder at a time.
+** After being released it stays unavailable during "cooldown" ms.
+** Coders that want the dongle wait on "cond" and are served according
+** to the arrival order they registered in "waiters" (sorted either by
+** arrival time (fifo) or by deadline (edf)). The waiting list lives
+** inside the dongle itself (no global state) and is always accessed
+** under "lock", which dongle_try_take already holds while managing it.
 */
 typedef struct s_dongle
 {
 	int				id;
-	int				taken;
-	int				owner;
-	long			free_since_ms;
-	t_heap			queue;
+	int				taken;			/* 1 if currently held by a coder */
+	int				owner;			/* coder number currently holding it, -1 if free */
+	long			free_since_ms;	/* timestamp (relative) since it became free */
 	pthread_mutex_t	lock;
 	pthread_cond_t	cond;
+	t_waiter		waiters[MAX_DONGLE_WAITERS];
+	int				waiters_count;
 }	t_dongle;
 
 /*
-** Simulation parameters, read-only once parsing is done.
+** ---- Shared simulation parameters (read only after parsing) ----
 */
 typedef struct s_params
 {
@@ -89,51 +86,35 @@ typedef struct s_params
 }	t_params;
 
 /*
-** Shared state. Passed by pointer to every thread, so that no
-** global variable is ever needed (they are forbidden by the subject).
+** ---- Global simulation state shared between all threads ----
 */
 typedef struct s_sim
 {
 	t_params		p;
 	struct timeval	start_time;
-	t_dongle		*dongles;
-	struct s_coder	*coders;
-	pthread_mutex_t	log_lock;
-	pthread_mutex_t	stop_lock;
-	pthread_mutex_t	startup_lock;
-	pthread_cond_t	startup_cond;
-	int				startup_released;
-	int				stop;
-	int				burned_coder;
+	t_dongle		*dongles;			/* array of nb_coders dongles */
+	struct s_coder	*coders;			/* array of nb_coders coders */
+	pthread_mutex_t	log_lock;			/* protects printf so lines never mix */
+	pthread_mutex_t	stop_lock;			/* protects "stop" flag */
+	int				stop;				/* 1 -> simulation must stop */
+	int				stop_reason_coder;	/* who burned out (for info) */
 }	t_sim;
 
 /*
-** Coder phases
-*/
-typedef enum e_coder_phase
-{
-	CX_IDLE,
-	CX_COMPILING,
-	CX_DEBUGGING,
-	CX_REFACTORING
-}	t_coder_phase;
-
-/*
-** One coder = one thread.
-** "last_compile_start" is written by the coder and read by the
-** monitor, so it has its own mutex.
+** ---- One coder (one thread) ----
 */
 typedef struct s_coder
 {
-	int				id;
-	pthread_t		thread;
-	int				nb_compiles;
-	long			last_compile_start;
-	pthread_mutex_t	deadline_lock;
-	t_sim			*sim;
-	int				first_dongle;
-	int				second_dongle;
-	t_coder_phase	phase;
+	int			id;					/* from 1 to nb_coders */
+	pthread_t	thread;
+	int			nb_compiles;		/* number of times this coder compiled */
+	long		last_compile_start;	/* timestamp of the beginning of the
+										   last compile, or start of sim */
+	pthread_mutex_t	deadline_lock;	/* protects last_compile_start,
+										   read by monitor & self */
+	t_sim		*sim;
+	int			left_dongle;		/* index of left dongle */
+	int			right_dongle;		/* index of right dongle */
 }	t_coder;
 
 /* parsing.c */
@@ -145,39 +126,22 @@ long	get_timestamp_ms(t_sim *sim);
 void	log_state(t_sim *sim, int coder_id, const char *msg);
 int		is_stopped(t_sim *sim);
 void	set_stop(t_sim *sim, int coder_id);
-int		is_burned(t_sim *sim);
-int		is_completed(t_sim *sim);
-void	set_completed(t_sim *sim);
-
-/* time_utils.c */
-void	ft_usleep_ms(t_sim *sim, long ms);
-void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock);
-
-/* heap.c */
-int		heap_init(t_heap *heap, int capacity, t_sched policy);
-void	heap_destroy(t_heap *heap);
-int		req_is_before(t_heap *heap, t_req *a, t_req *b);
-void	heap_swap(t_req *a, t_req *b);
-
-/* heap_ops.c */
-void	heap_sift_up(t_heap *heap, int i);
-void	heap_sift_down(t_heap *heap, int i);
-void	heap_push(t_heap *heap, int coder_id, long arrival, long deadline);
-void	heap_remove(t_heap *heap, int coder_id);
-int		heap_top_id(t_heap *heap);
+void	ft_usleep_ms(long ms);
 
 /* dongle.c */
-int		dongle_init(t_dongle *d, int id, int capacity, t_sched policy);
+void	dongle_init(t_dongle *d, int id);
 void	dongle_destroy(t_dongle *d);
-int		dongle_try_take(t_sim *sim, int idx, int coder_id, long deadline);
-void	dongle_release(t_sim *sim, int idx);
+int		dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline);
+void	dongle_release(t_sim *sim, int dongle_idx);
+
+/* dongle_waiters.c */
+void	waiter_add(t_dongle *d, int coder_id, long arrival, long deadline);
+void	waiter_remove(t_dongle *d, int coder_id);
+int		is_my_turn(t_sim *sim, t_dongle *d, int coder_id);
+void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock);
 
 /* coder.c */
 void	*coder_routine(void *arg);
-
-/* coder_cycle.c */
-void	do_compile(t_coder *c);
-void	do_debug_and_refactor(t_coder *c);
 
 /* monitor.c */
 void	*monitor_routine(void *arg);
