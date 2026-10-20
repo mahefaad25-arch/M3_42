@@ -77,6 +77,15 @@ void	*coder_routine(void *arg)
 	c = (t_coder *)arg;
 	while (!is_stopped(c->sim))
 	{
+		pthread_mutex_lock(&c->deadline_lock);
+		if (c->sim->p.nb_compiles_required != -1
+			&& c->nb_compiles >= c->sim->p.nb_compiles_required)
+		{
+			pthread_mutex_unlock(&c->deadline_lock);
+			break ;
+		}
+		pthread_mutex_unlock(&c->deadline_lock);
+
 		if (c->sim->p.nb_coders == 1)
 		{
 			take_dongles_single_coder(c);
@@ -88,12 +97,12 @@ void	*coder_routine(void *arg)
 		log_state(c->sim, c->id, "is compiling");
 		ft_usleep_ms(c->sim->p.time_to_compile);
 		inc_compiles(c);
-		dongle_release(c->sim, c->left_dongle);
-		dongle_release(c->sim, c->right_dongle);
 		log_state(c->sim, c->id, "is debugging");
 		ft_usleep_ms(c->sim->p.time_to_debug);
 		log_state(c->sim, c->id, "is refactoring");
 		ft_usleep_ms(c->sim->p.time_to_refactor);
+		dongle_release(c->sim, c->left_dongle);
+		dongle_release(c->sim, c->right_dongle);
 	}
 	return (NULL);
 }
