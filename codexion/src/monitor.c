@@ -1,24 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::  */
-/*   monitor.c                                         :+:      :+:    :+:  */
-/*                                                    +:+ +:+         +:+    */
-/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
-/*                                                +#+#+#+#+#+   +#+         */
-/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
-/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "codexion.h"
 
-/*
-** Checks every coder's deadline (last_compile_start + time_to_burnout).
-** If "now" is past a coder's deadline, that coder just burned out:
-** we log it immediately (within the required 10ms precision) and
-** stop the whole simulation.
-** Returns 1 if a burnout was detected, 0 otherwise.
-*/
 static int	check_burnout(t_sim *sim, long now)
 {
 	int		i;
@@ -43,11 +24,6 @@ static int	check_burnout(t_sim *sim, long now)
 	return (0);
 }
 
-/*
-** Checks whether every coder already compiled at least
-** number_of_compiles_required times. If so, the simulation must
-** stop successfully (no burnout).
-*/
 static int	check_all_compiled_enough(t_sim *sim)
 {
 	int	i;
@@ -55,18 +31,18 @@ static int	check_all_compiled_enough(t_sim *sim)
 	i = 0;
 	while (i < sim->p.nb_coders)
 	{
+		pthread_mutex_lock(&sim->coders[i].deadline_lock);
 		if (sim->coders[i].nb_compiles < sim->p.nb_compiles_required)
+		{
+			pthread_mutex_unlock(&sim->coders[i].deadline_lock);
 			return (0);
+		}
+		pthread_mutex_unlock(&sim->coders[i].deadline_lock);
 		i++;
 	}
 	return (1);
 }
 
-/*
-** The monitor thread: watches over all coders, sleeping in very
-** short slices (1ms) so that a burnout is always detected and
-** logged within the 10ms tolerance window required by the subject.
-*/
 void	*monitor_routine(void *arg)
 {
 	t_sim	*sim;

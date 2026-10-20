@@ -8,14 +8,10 @@ OBJ_DIR		= obj
 
 SRCS		= main.c \
 			  parsing.c \
-			  utils1.c \
-			  utils2.c \
-			  time_utils.c \
-			  heap.c \
-			  heap_ops.c \
+			  utils.c \
 			  dongle.c \
+			  dongle_waiters.c \
 			  coder.c \
-			  coder_cycle.c \
 			  monitor.c \
 			  init.c
 

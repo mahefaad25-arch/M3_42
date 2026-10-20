@@ -1,23 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::  */
-/*   init.c                                            :+:      :+:    :+:  */
-/*                                                    +:+ +:+         +:+    */
-/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
-/*                                                +#+#+#+#+#+   +#+         */
-/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
-/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "codexion.h"
 
-/*
-** Allocates and initializes every dongle. As stated in the subject:
-** "There is one dongle between each pair of coders", so with N
-** coders sitting in a circle there are N dongles (one on each side).
-** With a single coder there must be exactly one dongle on the table.
-*/
 static int	init_dongles(t_sim *sim)
 {
 	int	i;
@@ -36,15 +18,6 @@ static int	init_dongles(t_sim *sim)
 	return (0);
 }
 
-/*
-** Allocates and initializes every coder. Coder i (0-indexed) has
-** number i + 1. Its left dongle is at index i, its right dongle is
-** at index (i - 1 + nb_coders) % nb_coders, which reproduces the
-** classic circular seating described in the subject: coder 1 sits
-** next to coder number_of_coders, coder N sits between N-1 and N+1.
-** In the single-coder case both hands reach for the very same
-** unique dongle.
-*/
 static int	init_coders(t_sim *sim)
 {
 	int	i;
@@ -76,16 +49,8 @@ static int	init_coders(t_sim *sim)
 	return (0);
 }
 
-/*
-** Sets up the whole simulation state: parameters, start time,
-** dongles, coders and the mutexes protecting shared resources
-** (log output and the stop flag).
-** Returns 0 on success, -1 on allocation failure.
-*/
 int	sim_init(t_sim *sim, t_params *p)
 {
-	int	i;
-
 	sim->p = *p;
 	gettimeofday(&sim->start_time, NULL);
 	sim->stop = 0;
@@ -96,23 +61,17 @@ int	sim_init(t_sim *sim, t_params *p)
 		return (-1);
 	if (init_coders(sim) == -1)
 	{
+		int i;
+
+		i = 0;
+		while (i < sim->p.nb_coders)
+			dongle_destroy(&sim->dongles[i++]);
 		free(sim->dongles);
 		return (-1);
-	}
-	i = 0;
-	while (i < sim->p.nb_coders)
-	{
-		heap_push(&sim->dongles[sim->coders[i].first_dongle].queue,
-			sim->coders[i].id, -1, sim->p.time_to_burnout);
-		i++;
 	}
 	return (0);
 }
 
-/*
-** Releases every resource allocated by sim_init: destroys all
-** mutexes/condition variables and frees the dongle and coder arrays.
-*/
 void	sim_destroy(t_sim *sim)
 {
 	int	i;

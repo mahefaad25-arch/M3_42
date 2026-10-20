@@ -1,23 +1,7 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::  */
-/*   parsing.c                                         :+:      :+:    :+:  */
-/*                                                    +:+ +:+         +:+    */
-/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
-/*                                                +#+#+#+#+#+   +#+         */
-/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
-/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "codexion.h"
 
-/*
-** Checks that "str" only contains digits (no sign, no letters, no spaces).
-** We reject empty strings too.
-** This is how we make sure "non-integer" arguments are refused, as asked
-** by the subject.
-*/
+#include <limits.h>
+
 static int is_all_digits(const char *str)
 {
 	int i;
@@ -34,10 +18,6 @@ static int is_all_digits(const char *str)
 	return (1);
 }
 
-/*
-** Converts a validated numeric string into a long.
-** We already know it only has digits, atoi()/manual conversion is safe here.
-*/
 static long str_to_long(const char *str)
 {
 	long res;
@@ -47,16 +27,14 @@ static long str_to_long(const char *str)
 	i = 0;
 	while (str[i])
 	{
+		if (res > (LONG_MAX - (str[i] - '0')) / 10)
+			return (-1);
 		res = res * 10 + (str[i] - '0');
 		i++;
 	}
 	return (res);
 }
 
-/*
-** Parses one mandatory positive integer argument.
-** Returns 0 on success, -1 on error (prints an explicit message).
-*/
 static int	parse_positive(const char *str, long *out, const char *name)
 {
 	if (!is_all_digits(str))
@@ -65,83 +43,52 @@ static int	parse_positive(const char *str, long *out, const char *name)
 			name, str);
 		return (-1);
 	}
-<<<<<<< HEAD
-	if (*out <= 0 && (strcmp(name, "number_of_coders") == 0 || strcmp(name, "time_to_burnout") == 0))
-    {
-        fprintf(stderr, "codexion: %s must be strictly higher than 0\n", name);
-        return (-1);
-    }
-    else if (*out < 0)
-    {
-        fprintf(stderr, "codexion: %s must be positive\n", name);
-        return (-1);
-    }
+	*out = str_to_long(str);
+	if (*out < 0)
+	{
+		fprintf(stderr, "codexion: %s is too large\n", name);
+		return (-1);
+	}
+	if ((strcmp(name, "number_of_coders") == 0
+			|| strcmp(name, "time_to_burnout") == 0) && *out == 0)
+	{
+		fprintf(stderr, "codexion: %s must be greater than 0\n", name);
+		return (-1);
+	}
 	return (0);
 }
 
-/*
-** The scheduler argument must be exactly "fifo" or "edf".
-*/
-static int	parse_scheduler(const char *s, t_sched *out)
+static int	parse_int_argument(const char *str, int *out, const char *name)
 {
-	if (strcmp(s, "fifo") == 0)
-		*out = CX_FIFO;
-	else if (strcmp(s, "edf") == 0)
-		*out = CX_EDF;
-	else
-=======
-	*out = str_to_long(str);
-	if (*out <= 0 && (strcmp(name, "number_of_coders") == 0
-			|| strcmp(name, "time_to_burnout") == 0))
+	long	value;
+
+	if (parse_positive(str, &value, name) == -1)
+		return (-1);
+	if (value > INT_MAX)
 	{
-		fprintf(stderr, "codexion: %s must be strictly positive\n", name);
+		fprintf(stderr, "codexion: %s is too large\n", name);
 		return (-1);
 	}
-	if (*out > 2147483647 || *out < -2147483648)
->>>>>>> 1f331d8 (Add dongle waiters management and utility functions)
-	{
-		fprintf(stderr, "codexion: %s is too large or too small (max / min: %ld)\n", name, *out);
-		return (-1);
-	}
-	if (*out < 0)
-	{
-		fprintf(stderr, "codexion: %s must be non-negative\n", name);
-		return (-1);
-	}
+	*out = (int)value;
 	return (0);
 }
-/*
-** Parses the scheduler argument: must be exactly "fifo" or "edf".
-*/
+
 static int parse_scheduler(const char *str, t_sched *out)
 {
 	if (strcmp(str, "fifo") == 0)
-	{
 		*out = CX_SCHED_FIFO;
-		return (0);
-	}
-	if (strcmp(str, "edf") == 0)
-	{
+	else if (strcmp(str, "edf") == 0)
 		*out = CX_SCHED_EDF;
-		return (0);
+	else
+	{
+		fprintf(stderr, "codexion: scheduler must be 'fifo' or 'edf'\n");
+		return (-1);
 	}
-	fprintf(stderr, "codexion: scheduler must be 'fifo' or 'edf'\n");
-	return (-1);
+	return (0);
 }
 
-/*
-** Entry point of the parsing module.
-** Fills the t_params structure from argv.
-** Returns 0 on success, -1 if any argument is invalid.
-**
-** Expected order:
-** number_of_coders time_to_burnout time_to_compile time_to_debug
-** time_to_refactor number_of_compiles_required dongle_cooldown scheduler
-*/
 int parse_args(int argc, char **argv, t_params *p)
 {
-	long tmp;
-
 	if (argc != 9)
 	{
 		fprintf(stderr, "Usage: %s number_of_coders time_to_burnout "
@@ -150,9 +97,8 @@ int parse_args(int argc, char **argv, t_params *p)
 				argv[0]);
 		return (-1);
 	}
-	if (parse_positive(argv[1], &tmp, "number_of_coders") == -1)
+	if (parse_int_argument(argv[1], &p->nb_coders, "number_of_coders") == -1)
 		return (-1);
-	p->nb_coders = (int)tmp;
 	if (parse_positive(argv[2], &p->time_to_burnout, "time_to_burnout") == -1)
 		return (-1);
 	if (parse_positive(argv[3], &p->time_to_compile, "time_to_compile") == -1)
@@ -162,9 +108,9 @@ int parse_args(int argc, char **argv, t_params *p)
 	if (parse_positive(argv[5], &p->time_to_refactor,
 					   "time_to_refactor") == -1)
 		return (-1);
-	if (parse_positive(argv[6], &tmp, "number_of_compiles_required") == -1)
+	if (parse_int_argument(argv[6], &p->nb_compiles_required,
+			"number_of_compiles_required") == -1)
 		return (-1);
-	p->nb_compiles_required = (int)tmp;
 	if (parse_positive(argv[7], &p->dongle_cooldown, "dongle_cooldown") == -1)
 		return (-1);
 	if (parse_scheduler(argv[8], &p->scheduler) == -1)

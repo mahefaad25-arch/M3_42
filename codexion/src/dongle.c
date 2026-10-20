@@ -1,61 +1,23 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::  */
-/*   dongle.c                                          :+:      :+:    :+:  */
-/*                                                    +:+ +:+         +:+    */
-/*   By: student <student@student.42.fr>            +#+  +:+       +#+      */
-/*                                                +#+#+#+#+#+   +#+         */
-/*   Created: 2026/08/31 00:00:00 by student           #+#    #+#          */
-/*   Updated: 2026/08/31 00:00:00 by student          ###   ########.fr    */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "codexion.h"
 
-/*
-** Initializes one dongle: free, no owner, mutex/cond ready. Its
-** waiting list (see dongle_waiters.c) starts empty automatically,
-** since it is a static array zero-initialized by the C standard.
-*/
 void	dongle_init(t_dongle *d, int id)
 {
 	d->id = id;
 	d->taken = 0;
 	d->owner = -1;
-	/* Sentinel far in the past: guarantees the cooldown check in
-	** can_take_now() never blocks the very first acquisition of a
-	** dongle at the beginning of the simulation (a dongle that was
-	** never released yet must not behave as if it just came out of
-	** cooldown). */
+
 	d->free_since_ms = -1000000000;
 	d->waiters_count = 0;
 	pthread_mutex_init(&d->lock, NULL);
 	pthread_cond_init(&d->cond, NULL);
 }
 
-/*
-** Destroys a dongle's mutex and condition variable.
-*/
 void	dongle_destroy(t_dongle *d)
 {
 	pthread_mutex_destroy(&d->lock);
 	pthread_cond_destroy(&d->cond);
 }
 
-/*
-<<<<<<< HEAD
-** Returns 1 when the dongle can be handed to this coder right now:
-**   - nobody holds it,
-**   - it was never released yet, or its cooldown has fully elapsed
-**     since the last time it was released,`
-**   - and the scheduler designates this coder (root of the heap).
-** The caller must already hold the dongle's mutex.
-=======
-** Returns 1 if the dongle can be granted to this coder right now:
-** it must be free, its cooldown must have elapsed, and it must be
-** this coder's turn according to the scheduler.
->>>>>>> 1f331d8 (Add dongle waiters management and utility functions)
-*/
 static int	can_take_now(t_sim *sim, int dongle_idx, int coder_id)
 {
 	t_dongle	*d;
@@ -64,40 +26,27 @@ static int	can_take_now(t_sim *sim, int dongle_idx, int coder_id)
 	d = &sim->dongles[dongle_idx];
 	now = get_timestamp_ms(sim);
 	return (d->taken == 0
-		&& (now - d->free_since_ms) >= sim->p.dongle_cooldown
+		&& (d->free_since_ms < 0
+			|| now - d->free_since_ms >= sim->p.dongle_cooldown)
 		&& is_my_turn(sim, d, coder_id));
 }
 
-/*
-** Tries to take one dongle. Blocks (waiting on the condition
-** variable) until the dongle is free, its cooldown elapsed and it
-** is this coder's turn according to the scheduler.
-** "deadline" is the coder's current burnout deadline, used by edf.
-** Returns 0 on success, -1 if the simulation stopped meanwhile.
-*/
 int	dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline)
 {
 	t_dongle	*d;
-<<<<<<< HEAD
-	t_coder		*c;
-
-	d = &sim->dongles[idx];
-	c = &sim->coders[coder_id - 1];
-	pthread_mutex_lock(&d->lock);
-	if (c->nb_compiles != 0 || idx != c->first_dongle)
-		heap_push(&d->queue, coder_id, get_timestamp_ms(sim), deadline);
-	while (!is_stopped(sim) && !can_take_now(sim, idx, coder_id))
-=======
 	long		arrival;
 
 	d = &sim->dongles[dongle_idx];
 	pthread_mutex_lock(&d->lock);
 	arrival = get_timestamp_ms(sim);
-	waiter_add(d, coder_id, arrival, deadline);
+	if (waiter_add(sim, d, coder_id, arrival, deadline) == -1)
+	{
+		pthread_mutex_unlock(&d->lock);
+		return (-1);
+	}
 	while (!is_stopped(sim) && !can_take_now(sim, dongle_idx, coder_id))
->>>>>>> 1f331d8 (Add dongle waiters management and utility functions)
 		short_timed_wait(&d->cond, &d->lock);
-	waiter_remove(d, coder_id);
+	waiter_remove(sim, d, coder_id);
 	if (is_stopped(sim))
 	{
 		pthread_mutex_unlock(&d->lock);
@@ -109,10 +58,6 @@ int	dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline)
 	return (0);
 }
 
-/*
-** Releases a dongle: marks it free, stores the release timestamp
-** (used for the cooldown) and wakes up every coder waiting for it.
-*/
 void	dongle_release(t_sim *sim, int dongle_idx)
 {
 	t_dongle	*d;

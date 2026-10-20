@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Extract Codexion subject requirements",
+			"type": "shell",
+			"command": "pdftotext",
+			"args": [
+				"-layout",
+				"codexion/src/en.subject.pdf",
+				"-"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
