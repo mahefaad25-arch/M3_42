@@ -73,6 +73,7 @@ typedef struct s_coder
 }	t_coder;
 
 int		parse_args(int argc, char **argv, t_params *p);
+int	check_all_compiled_enough(t_sim *sim);
 
 long	time_diff_ms(struct timeval *start, struct timeval *end);
 long	get_timestamp_ms(t_sim *sim);

@@ -97,12 +97,20 @@ void	*coder_routine(void *arg)
 		log_state(c->sim, c->id, "is compiling");
 		ft_usleep_ms(c->sim->p.time_to_compile);
 		inc_compiles(c);
-		log_state(c->sim, c->id, "is debugging");
-		ft_usleep_ms(c->sim->p.time_to_debug);
-		log_state(c->sim, c->id, "is refactoring");
-		ft_usleep_ms(c->sim->p.time_to_refactor);
-		dongle_release(c->sim, c->left_dongle);
-		dongle_release(c->sim, c->right_dongle);
+		if (check_all_compiled_enough(c->sim))
+		{
+			set_stop(c->sim, -1);
+			break ;
+		}
+		else
+		{
+			log_state(c->sim, c->id, "is debugging");
+			ft_usleep_ms(c->sim->p.time_to_debug);
+			log_state(c->sim, c->id, "is refactoring");
+			ft_usleep_ms(c->sim->p.time_to_refactor);
+			dongle_release(c->sim, c->left_dongle);
+			dongle_release(c->sim, c->right_dongle);
+		}
 	}
 	return (NULL);
 }

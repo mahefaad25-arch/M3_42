@@ -13,7 +13,7 @@ static int	check_burnout(t_sim *sim, long now)
 		last = sim->coders[i].last_compile_start;
 		pthread_mutex_unlock(&sim->coders[i].deadline_lock);
 		deadline = last + sim->p.time_to_burnout;
-		if (now >= deadline)
+		if (now > deadline)
 		{
 			set_stop(sim, sim->coders[i].id);
 			log_state(sim, sim->coders[i].id, "burned out");
@@ -24,7 +24,7 @@ static int	check_burnout(t_sim *sim, long now)
 	return (0);
 }
 
-static int	check_all_compiled_enough(t_sim *sim)
+int	check_all_compiled_enough(t_sim *sim)
 {
 	int	i;
 
