@@ -57,12 +57,15 @@ void	set_stop(t_sim *sim, int coder_id)
 
 void	ft_usleep_ms(long ms)
 {
-	long	slept;
+	struct timeval	start;
+	struct timeval	now;
 
-	slept = 0;
-	while (slept < ms)
+	gettimeofday(&start, NULL);
+	while (1)
 	{
-		usleep(1000);
-		slept++;
+		gettimeofday(&now, NULL);
+		if (time_diff_ms(&start, &now) >= ms)
+			break ;
+		usleep(200);
 	}
 }

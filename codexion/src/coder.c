@@ -96,6 +96,8 @@ void	*coder_routine(void *arg)
 		set_compile_start(c, get_timestamp_ms(c->sim));
 		log_state(c->sim, c->id, "is compiling");
 		ft_usleep_ms(c->sim->p.time_to_compile);
+		dongle_release(c->sim, c->left_dongle);
+		dongle_release(c->sim, c->right_dongle);
 		inc_compiles(c);
 		if (check_all_compiled_enough(c->sim))
 		{
@@ -108,8 +110,6 @@ void	*coder_routine(void *arg)
 			ft_usleep_ms(c->sim->p.time_to_debug);
 			log_state(c->sim, c->id, "is refactoring");
 			ft_usleep_ms(c->sim->p.time_to_refactor);
-			dongle_release(c->sim, c->left_dongle);
-			dongle_release(c->sim, c->right_dongle);
 		}
 	}
 	return (NULL);

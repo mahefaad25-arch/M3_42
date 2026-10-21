@@ -109,16 +109,15 @@ int	is_my_turn(t_sim *sim, t_dongle *d, int coder_id)
 	return (d->waiters_count > 0 && d->waiters[0].coder_id == coder_id);
 }
 
-void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock)
+void short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock)
 {
-	struct timespec	ts;
-
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	ts.tv_nsec += 1000000L;
-	if (ts.tv_nsec >= 1000000000L)
-	{
-		ts.tv_nsec -= 1000000000L;
-		ts.tv_sec += 1;
-	}
-	pthread_cond_timedwait(cond, lock, &ts);
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_nsec += 1000000L;
+    if (ts.tv_nsec >= 1000000000L)
+    {
+        ts.tv_nsec -= 1000000000L;
+        ts.tv_sec += 1;
+    }
+    pthread_cond_timedwait(cond, lock, &ts);
 }
