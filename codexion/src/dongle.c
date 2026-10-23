@@ -19,6 +19,7 @@ void	dongle_init(t_dongle *d, int id)
 	d->owner = -1;
 	d->free_since_ms = -1000000000;
 	d->waiters_count = 0;
+	d->next_order = 0;
 	pthread_mutex_init(&d->lock, NULL);
 	pthread_cond_init(&d->cond, NULL);
 }
@@ -54,15 +55,13 @@ static int	wait_for_turn(t_sim *sim, t_dongle *d, int coder_id)
 int	dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline)
 {
 	t_dongle	*d;
-	long		arrival;
 	t_waiter	request;
 
 	d = &sim->dongles[dongle_idx];
 	pthread_mutex_lock(&d->lock);
-	arrival = get_timestamp_ms(sim);
 	request.coder_id = coder_id;
-	request.arrival_ms = arrival;
 	request.deadline_ms = deadline;
+	request.order = d->next_order++;
 	if (waiter_add(sim, d, &request) == -1)
 	{
 		pthread_mutex_unlock(&d->lock);

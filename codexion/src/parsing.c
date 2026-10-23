@@ -93,7 +93,8 @@ static int	parse_second_group(char **argv, t_params *p)
 	// 	p->scheduler = CX_SCHED_LIFO;
 	else
 	{
-		fprintf(stderr, "codexion: scheduler must be 'fifo' or 'edf'\n");
+		fprintf(stderr,
+			"codexion: scheduler must be 'fifo', 'edf' or 'lifo'\n");
 		return (-1);
 	}
 	return (0);

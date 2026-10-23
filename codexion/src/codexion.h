@@ -33,8 +33,8 @@ typedef enum e_sched
 typedef struct s_waiter
 {
 	int		coder_id;
-	long	arrival_ms;
 	long	deadline_ms;
+	unsigned long long	order;
 }	t_waiter;
 
 typedef struct s_dongle
@@ -47,6 +47,7 @@ typedef struct s_dongle
 	pthread_cond_t	cond;
 	t_waiter		waiters[MAX_DONGLE_WAITERS];
 	int				waiters_count;
+	unsigned long long	next_order;
 }	t_dongle;
 
 typedef struct s_params

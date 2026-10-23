@@ -15,14 +15,15 @@
 static int	waiter_has_priority(t_sim *sim, const t_waiter *a,
 		const t_waiter *b)
 {
-	if (sim->p.scheduler == CX_SCHED_FIFO && a->arrival_ms != b->arrival_ms)
-		return (a->arrival_ms < b->arrival_ms);
-	if (sim->p.scheduler == CX_SCHED_EDF && a->deadline_ms != b->deadline_ms)
+	if (sim->p.scheduler == CX_SCHED_FIFO && a->order != b->order)
+		return (a->order < b->order);
+	// if (sim->p.scheduler == CX_SCHED_LIFO && a->order != b->order)
+	// 	return (a->order > b->order);
+	if (sim->p.scheduler == CX_SCHED_EDF
+		&& a->deadline_ms != b->deadline_ms)
 		return (a->deadline_ms < b->deadline_ms);
-	// if (sim->p.scheduler == CX_SCHED_LIFO && a->arrival_ms != b->arrival_ms)
-    // 	return (a->arrival_ms > b->arrival_ms);
-	if (a->arrival_ms != b->arrival_ms)
-		return (a->arrival_ms < b->arrival_ms);
+	if (a->order != b->order)
+		return (a->order < b->order);
 	return (a->coder_id < b->coder_id);
 }
 
