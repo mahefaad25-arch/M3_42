@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 long	time_diff_ms(struct timeval *start, struct timeval *end)
@@ -23,7 +35,6 @@ void	log_state(t_sim *sim, int coder_id, const char *msg)
 	long	ts;
 
 	pthread_mutex_lock(&sim->log_lock);
-
 	if (is_stopped(sim) && strcmp(msg, "burned out") != 0)
 	{
 		pthread_mutex_unlock(&sim->log_lock);
@@ -32,27 +43,6 @@ void	log_state(t_sim *sim, int coder_id, const char *msg)
 	ts = get_timestamp_ms(sim);
 	printf("%ld %d %s\n", ts, coder_id, msg);
 	pthread_mutex_unlock(&sim->log_lock);
-}
-
-int	is_stopped(t_sim *sim)
-{
-	int	val;
-
-	pthread_mutex_lock(&sim->stop_lock);
-	val = sim->stop;
-	pthread_mutex_unlock(&sim->stop_lock);
-	return (val);
-}
-
-void	set_stop(t_sim *sim, int coder_id)
-{
-	pthread_mutex_lock(&sim->stop_lock);
-	if (sim->stop == 0)
-	{
-		sim->stop = 1;
-		sim->stop_reason_coder = coder_id;
-	}
-	pthread_mutex_unlock(&sim->stop_lock);
 }
 
 void	ft_usleep_ms(long ms)
@@ -68,4 +58,18 @@ void	ft_usleep_ms(long ms)
 			break ;
 		usleep(200);
 	}
+}
+
+void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock)
+{
+	struct timespec	ts;
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_nsec += 1000000L;
+	if (ts.tv_nsec >= 1000000000L)
+	{
+		ts.tv_nsec -= 1000000000L;
+		ts.tv_sec += 1;
+	}
+	pthread_cond_timedwait(cond, lock, &ts);
 }

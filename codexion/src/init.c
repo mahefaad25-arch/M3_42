@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   init.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 static int	init_dongles(t_sim *sim)
@@ -33,18 +45,27 @@ static int	init_coders(t_sim *sim)
 		sim->coders[i].last_compile_start = 0;
 		pthread_mutex_init(&sim->coders[i].deadline_lock, NULL);
 		sim->coders[i].sim = sim;
-		if (sim->p.nb_coders == 1)
-		{
-			sim->coders[i].left_dongle = 0;
-			sim->coders[i].right_dongle = 0;
-		}
-		else
-		{
-			sim->coders[i].left_dongle = i;
-			sim->coders[i].right_dongle
-				= (i - 1 + sim->p.nb_coders) % sim->p.nb_coders;
-		}
+		sim->coders[i].left_dongle = i;
+		sim->coders[i].right_dongle
+			= (i - 1 + sim->p.nb_coders) % sim->p.nb_coders;
 		i++;
+	}
+	return (0);
+}
+
+static int	init_resources(t_sim *sim)
+{
+	int	i;
+
+	if (init_dongles(sim) == -1)
+		return (-1);
+	if (init_coders(sim) == -1)
+	{
+		i = 0;
+		while (i < sim->p.nb_coders)
+			dongle_destroy(&sim->dongles[i++]);
+		free(sim->dongles);
+		return (-1);
 	}
 	return (0);
 }
@@ -57,19 +78,7 @@ int	sim_init(t_sim *sim, t_params *p)
 	sim->stop_reason_coder = -1;
 	pthread_mutex_init(&sim->log_lock, NULL);
 	pthread_mutex_init(&sim->stop_lock, NULL);
-	if (init_dongles(sim) == -1)
-		return (-1);
-	if (init_coders(sim) == -1)
-	{
-		int i;
-
-		i = 0;
-		while (i < sim->p.nb_coders)
-			dongle_destroy(&sim->dongles[i++]);
-		free(sim->dongles);
-		return (-1);
-	}
-	return (0);
+	return (init_resources(sim));
 }
 
 void	sim_destroy(t_sim *sim)

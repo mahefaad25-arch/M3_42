@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   monitor.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+     +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 static int	check_burnout(t_sim *sim, long now)
@@ -62,4 +74,25 @@ void	*monitor_routine(void *arg)
 		usleep(1000);
 	}
 	return (NULL);
+}
+
+int	is_stopped(t_sim *sim)
+{
+	int	val;
+
+	pthread_mutex_lock(&sim->stop_lock);
+	val = sim->stop;
+	pthread_mutex_unlock(&sim->stop_lock);
+	return (val);
+}
+
+void	set_stop(t_sim *sim, int coder_id)
+{
+	pthread_mutex_lock(&sim->stop_lock);
+	if (sim->stop == 0)
+	{
+		sim->stop = 1;
+		sim->stop_reason_coder = coder_id;
+	}
+	pthread_mutex_unlock(&sim->stop_lock);
 }

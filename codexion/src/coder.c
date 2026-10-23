@@ -1,28 +1,31 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   coder.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 static long	get_deadline(t_coder *c)
 {
-	long	last;
 	long	deadline;
 
 	pthread_mutex_lock(&c->deadline_lock);
-	last = c->last_compile_start;
+	deadline = c->last_compile_start + c->sim->p.time_to_burnout;
 	pthread_mutex_unlock(&c->deadline_lock);
-	deadline = last + c->sim->p.time_to_burnout;
 	return (deadline);
-}
-
-static void	set_compile_start(t_coder *c, long ts)
-{
-	pthread_mutex_lock(&c->deadline_lock);
-	c->last_compile_start = ts;
-	pthread_mutex_unlock(&c->deadline_lock);
 }
 
 static int	take_both_dongles(t_coder *c)
 {
-	int	first;
-	int	second;
+	int		first;
+	int		second;
 	long	deadline;
 
 	deadline = get_deadline(c);
@@ -48,26 +51,48 @@ static int	take_both_dongles(t_coder *c)
 	return (0);
 }
 
-static int	take_dongles_single_coder(t_coder *c)
+static int	compile_phase(t_coder *c)
 {
-	long	deadline;
-
-	deadline = get_deadline(c);
-	if (dongle_try_take(c->sim, c->left_dongle, c->id, deadline) == -1)
+	if (take_both_dongles(c) == -1)
 		return (-1);
-	log_state(c->sim, c->id, "has taken a dongle");
-
-	while (!is_stopped(c->sim))
-		ft_usleep_ms(1);
-	dongle_release(c->sim, c->left_dongle);
-	return (-1);
-}
-
-static void	inc_compiles(t_coder *c)
-{
+	pthread_mutex_lock(&c->deadline_lock);
+	c->last_compile_start = get_timestamp_ms(c->sim);
+	pthread_mutex_unlock(&c->deadline_lock);
+	log_state(c->sim, c->id, "is compiling");
+	ft_usleep_ms(c->sim->p.time_to_compile);
 	pthread_mutex_lock(&c->deadline_lock);
 	c->nb_compiles++;
 	pthread_mutex_unlock(&c->deadline_lock);
+	dongle_release(c->sim, c->left_dongle);
+	dongle_release(c->sim, c->right_dongle);
+	if (check_all_compiled_enough(c->sim))
+	{
+		set_stop(c->sim, -1);
+		return (-1);
+	}
+	return (0);
+}
+
+static int	coder_cycle(t_coder *c)
+{
+	if (c->sim->p.nb_coders == 1)
+	{
+		if (dongle_try_take(c->sim, c->left_dongle, c->id,
+				c->sim->p.time_to_burnout) == -1)
+			return (-1);
+		log_state(c->sim, c->id, "has taken a dongle");
+		while (!is_stopped(c->sim))
+			ft_usleep_ms(1);
+		dongle_release(c->sim, c->left_dongle);
+		return (-1);
+	}
+	if (compile_phase(c) == -1)
+		return (-1);
+	log_state(c->sim, c->id, "is debugging");
+	ft_usleep_ms(c->sim->p.time_to_debug);
+	log_state(c->sim, c->id, "is refactoring");
+	ft_usleep_ms(c->sim->p.time_to_refactor);
+	return (0);
 }
 
 void	*coder_routine(void *arg)
@@ -78,39 +103,14 @@ void	*coder_routine(void *arg)
 	while (!is_stopped(c->sim))
 	{
 		pthread_mutex_lock(&c->deadline_lock);
-		if (c->sim->p.nb_compiles_required != -1
-			&& c->nb_compiles >= c->sim->p.nb_compiles_required)
+		if (c->nb_compiles >= c->sim->p.nb_compiles_required)
 		{
 			pthread_mutex_unlock(&c->deadline_lock);
 			break ;
 		}
 		pthread_mutex_unlock(&c->deadline_lock);
-
-		if (c->sim->p.nb_coders == 1)
-		{
-			take_dongles_single_coder(c);
+		if (coder_cycle(c) == -1)
 			break ;
-		}
-		if (take_both_dongles(c) == -1)
-			break ;
-		set_compile_start(c, get_timestamp_ms(c->sim));
-		log_state(c->sim, c->id, "is compiling");
-		ft_usleep_ms(c->sim->p.time_to_compile);
-		dongle_release(c->sim, c->left_dongle);
-		dongle_release(c->sim, c->right_dongle);
-		inc_compiles(c);
-		if (check_all_compiled_enough(c->sim))
-		{
-			set_stop(c->sim, -1);
-			break ;
-		}
-		else
-		{
-			log_state(c->sim, c->id, "is debugging");
-			ft_usleep_ms(c->sim->p.time_to_debug);
-			log_state(c->sim, c->id, "is refactoring");
-			ft_usleep_ms(c->sim->p.time_to_refactor);
-		}
 	}
 	return (NULL);
 }

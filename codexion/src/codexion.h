@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   codexion.h                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CODEXION_H
 # define CODEXION_H
 
@@ -12,7 +24,8 @@
 typedef enum e_sched
 {
 	CX_SCHED_FIFO,
-	CX_SCHED_EDF
+	CX_SCHED_EDF,
+	// CX_SCHED_LIFO
 }	t_sched;
 
 # define MAX_DONGLE_WAITERS 2
@@ -62,18 +75,18 @@ typedef struct s_sim
 
 typedef struct s_coder
 {
-	int			id;
-	pthread_t	thread;
-	int			nb_compiles;
-	long		last_compile_start;
+	int				id;
+	pthread_t		thread;
+	int				nb_compiles;
+	long			last_compile_start;
 	pthread_mutex_t	deadline_lock;
-	t_sim		*sim;
-	int			left_dongle;
-	int			right_dongle;
+	t_sim			*sim;
+	int				left_dongle;
+	int				right_dongle;
 }	t_coder;
 
 int		parse_args(int argc, char **argv, t_params *p);
-int	check_all_compiled_enough(t_sim *sim);
+int		check_all_compiled_enough(t_sim *sim);
 
 long	time_diff_ms(struct timeval *start, struct timeval *end);
 long	get_timestamp_ms(t_sim *sim);
@@ -84,13 +97,12 @@ void	ft_usleep_ms(long ms);
 
 void	dongle_init(t_dongle *d, int id);
 void	dongle_destroy(t_dongle *d);
-int		dongle_try_take(t_sim *sim, int dongle_idx, int coder_id, long deadline);
+int		dongle_try_take(t_sim *sim, int dongle_idx, int coder_id,
+			long deadline);
 void	dongle_release(t_sim *sim, int dongle_idx);
 
-int		waiter_add(t_sim *sim, t_dongle *d, int coder_id, long arrival,
-			long deadline);
+int		waiter_add(t_sim *sim, t_dongle *d, const t_waiter *request);
 void	waiter_remove(t_sim *sim, t_dongle *d, int coder_id);
-int		is_my_turn(t_sim *sim, t_dongle *d, int coder_id);
 void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock);
 
 void	*coder_routine(void *arg);

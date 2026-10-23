@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   dongle_waiters.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "codexion.h"
 
 static int	waiter_has_priority(t_sim *sim, const t_waiter *a,
@@ -7,23 +19,17 @@ static int	waiter_has_priority(t_sim *sim, const t_waiter *a,
 		return (a->arrival_ms < b->arrival_ms);
 	if (sim->p.scheduler == CX_SCHED_EDF && a->deadline_ms != b->deadline_ms)
 		return (a->deadline_ms < b->deadline_ms);
+	// if (sim->p.scheduler == CX_SCHED_LIFO && a->arrival_ms != b->arrival_ms)
+    // 	return (a->arrival_ms > b->arrival_ms);
 	if (a->arrival_ms != b->arrival_ms)
 		return (a->arrival_ms < b->arrival_ms);
 	return (a->coder_id < b->coder_id);
 }
 
-static void	swap_waiters(t_waiter *a, t_waiter *b)
-{
-	t_waiter	tmp;
-
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
-
 static void	heap_sift_up(t_sim *sim, t_dongle *d, int index)
 {
-	int	parent;
+	int			parent;
+	t_waiter	tmp;
 
 	while (index > 0)
 	{
@@ -31,16 +37,19 @@ static void	heap_sift_up(t_sim *sim, t_dongle *d, int index)
 		if (!waiter_has_priority(sim, &d->waiters[index],
 				&d->waiters[parent]))
 			break ;
-		swap_waiters(&d->waiters[index], &d->waiters[parent]);
+		tmp = d->waiters[index];
+		d->waiters[index] = d->waiters[parent];
+		d->waiters[parent] = tmp;
 		index = parent;
 	}
 }
 
 static void	heap_sift_down(t_sim *sim, t_dongle *d, int index)
 {
-	int	left;
-	int	right;
-	int	best;
+	int			left;
+	int			right;
+	int			best;
+	t_waiter	tmp;
 
 	while (index < d->waiters_count)
 	{
@@ -57,13 +66,14 @@ static void	heap_sift_down(t_sim *sim, t_dongle *d, int index)
 			best = right;
 		if (best == index)
 			break ;
-		swap_waiters(&d->waiters[index], &d->waiters[best]);
+		tmp = d->waiters[index];
+		d->waiters[index] = d->waiters[best];
+		d->waiters[best] = tmp;
 		index = best;
 	}
 }
 
-int	waiter_add(t_sim *sim, t_dongle *d, int coder_id, long arrival,
-		long deadline)
+int	waiter_add(t_sim *sim, t_dongle *d, const t_waiter *request)
 {
 	int	index;
 
@@ -73,9 +83,7 @@ int	waiter_add(t_sim *sim, t_dongle *d, int coder_id, long arrival,
 		fprintf(stderr, "codexion: dongle waiter heap capacity exceeded\n");
 		return (-1);
 	}
-	d->waiters[index].coder_id = coder_id;
-	d->waiters[index].arrival_ms = arrival;
-	d->waiters[index].deadline_ms = deadline;
+	d->waiters[index] = *request;
 	d->waiters_count++;
 	heap_sift_up(sim, d, index);
 	return (0);
@@ -101,23 +109,4 @@ void	waiter_remove(t_sim *sim, t_dongle *d, int coder_id)
 		heap_sift_up(sim, d, i);
 	else
 		heap_sift_down(sim, d, i);
-}
-
-int	is_my_turn(t_sim *sim, t_dongle *d, int coder_id)
-{
-	(void)sim;
-	return (d->waiters_count > 0 && d->waiters[0].coder_id == coder_id);
-}
-
-void short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock)
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_nsec += 1000000L;
-    if (ts.tv_nsec >= 1000000000L)
-    {
-        ts.tv_nsec -= 1000000000L;
-        ts.tv_sec += 1;
-    }
-    pthread_cond_timedwait(cond, lock, &ts);
 }
