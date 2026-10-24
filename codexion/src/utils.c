@@ -45,19 +45,20 @@ void	log_state(t_sim *sim, int coder_id, const char *msg)
 	pthread_mutex_unlock(&sim->log_lock);
 }
 
-void	ft_usleep_ms(long ms)
+int	ft_usleep_ms(t_sim *sim, long ms)
 {
 	struct timeval	start;
 	struct timeval	now;
 
 	gettimeofday(&start, NULL);
-	while (1)
+	while (!is_stopped(sim))
 	{
 		gettimeofday(&now, NULL);
 		if (time_diff_ms(&start, &now) >= ms)
-			break ;
+			return (0);
 		usleep(200);
 	}
+	return (-1);
 }
 
 void	short_timed_wait(pthread_cond_t *cond, pthread_mutex_t *lock)

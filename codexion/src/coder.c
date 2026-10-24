@@ -59,7 +59,12 @@ static int	compile_phase(t_coder *c)
 	c->last_compile_start = get_timestamp_ms(c->sim);
 	pthread_mutex_unlock(&c->deadline_lock);
 	log_state(c->sim, c->id, "is compiling");
-	ft_usleep_ms(c->sim->p.time_to_compile);
+	if (ft_usleep_ms(c->sim, c->sim->p.time_to_compile) == -1)
+	{
+		dongle_release(c->sim, c->left_dongle);
+		dongle_release(c->sim, c->right_dongle);
+		return (-1);
+	}
 	pthread_mutex_lock(&c->deadline_lock);
 	c->nb_compiles++;
 	pthread_mutex_unlock(&c->deadline_lock);
@@ -82,16 +87,18 @@ static int	coder_cycle(t_coder *c)
 			return (-1);
 		log_state(c->sim, c->id, "has taken a dongle");
 		while (!is_stopped(c->sim))
-			ft_usleep_ms(1);
+			usleep(200);
 		dongle_release(c->sim, c->left_dongle);
 		return (-1);
 	}
 	if (compile_phase(c) == -1)
 		return (-1);
 	log_state(c->sim, c->id, "is debugging");
-	ft_usleep_ms(c->sim->p.time_to_debug);
+	if (ft_usleep_ms(c->sim, c->sim->p.time_to_debug) == -1)
+		return (-1);
 	log_state(c->sim, c->id, "is refactoring");
-	ft_usleep_ms(c->sim->p.time_to_refactor);
+	if (ft_usleep_ms(c->sim, c->sim->p.time_to_refactor) == -1)
+		return (-1);
 	return (0);
 }
 

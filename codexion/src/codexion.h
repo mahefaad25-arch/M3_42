@@ -95,7 +95,7 @@ long	get_timestamp_ms(t_sim *sim);
 void	log_state(t_sim *sim, int coder_id, const char *msg);
 int		is_stopped(t_sim *sim);
 void	set_stop(t_sim *sim, int coder_id);
-void	ft_usleep_ms(long ms);
+int		ft_usleep_ms(t_sim *sim, long ms);
 
 void	dongle_init(t_dongle *d, int id);
 void	dongle_destroy(t_dongle *d);
