@@ -7,6 +7,7 @@ SRC_DIR		= src
 OBJ_DIR		= obj
 
 SRCS		= main.c \
+			  ft_atoi.c \
 			  parsing.c \
 			  utils.c \
 			  dongle.c \

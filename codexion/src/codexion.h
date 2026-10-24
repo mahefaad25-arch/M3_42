@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   codexion.h                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bramahef <bramahef@student.42.fr>          +#+  +:+       +#+        */
+/*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/23 00:00:00 by bramahef         ###   ########.fr       */
+/*   Updated: 2026/10/24 01:53:31 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,7 @@ typedef struct s_coder
 
 int		parse_args(int argc, char **argv, t_params *p);
 int		check_all_compiled_enough(t_sim *sim);
+int		ft_atoi(const char *str);
 
 long	time_diff_ms(struct timeval *start, struct timeval *end);
 long	get_timestamp_ms(t_sim *sim);
