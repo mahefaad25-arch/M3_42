@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/24 01:53:56 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:54:26 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:36:21 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 18:36:22 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,15 +17,17 @@ static int	check_burnout(t_sim *sim, long now)
 	int		i;
 	long	last;
 	long	deadline;
+	int		not_done;
 
 	i = 0;
 	while (i < sim->p.nb_coders)
 	{
 		pthread_mutex_lock(&sim->coders[i].deadline_lock);
 		last = sim->coders[i].last_compile_start;
+		not_done = sim->coders[i].nb_compiles < sim->p.nb_compiles_required;
 		pthread_mutex_unlock(&sim->coders[i].deadline_lock);
 		deadline = last + sim->p.time_to_burnout;
-		if (now > deadline)
+		if (now > deadline && not_done)
 		{
 			set_stop(sim, sim->coders[i].id);
 			log_state(sim, sim->coders[i].id, "burned out");

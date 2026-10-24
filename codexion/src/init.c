@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:49 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:36:08 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 18:36:09 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,8 @@ static int	init_coders(t_sim *sim)
 		pthread_mutex_init(&sim->coders[i].deadline_lock, NULL);
 		sim->coders[i].sim = sim;
 		sim->coders[i].left_dongle = i;
-		sim->coders[i].right_dongle
-			= (i - 1 + sim->p.nb_coders) % sim->p.nb_coders;
+		sim->coders[i].right_dongle = (i - 1 + sim->p.nb_coders)
+			% sim->p.nb_coders;
 		i++;
 	}
 	return (0);

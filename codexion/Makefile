@@ -9,6 +9,7 @@ OBJ_DIR		= obj
 SRCS		= main.c \
 			  ft_atoi.c \
 			  parsing.c \
+			  parsing2.c \
 			  utils.c \
 			  dongle.c \
 			  dongle_waiters.c \

@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:31 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:35:41 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 19:12:00 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,28 +25,27 @@ typedef enum e_sched
 {
 	CX_SCHED_FIFO,
 	CX_SCHED_EDF,
-	// CX_SCHED_LIFO
 }	t_sched;
 
 # define MAX_DONGLE_WAITERS 2
 
 typedef struct s_waiter
 {
-	int		coder_id;
-	long	deadline_ms;
+	int					coder_id;
+	long				deadline_ms;
 	unsigned long long	order;
 }	t_waiter;
 
 typedef struct s_dongle
 {
-	int				id;
-	int				taken;
-	int				owner;
-	long			free_since_ms;
-	pthread_mutex_t	lock;
-	pthread_cond_t	cond;
-	t_waiter		waiters[MAX_DONGLE_WAITERS];
-	int				waiters_count;
+	int					id;
+	int					taken;
+	int					owner;
+	long				free_since_ms;
+	pthread_mutex_t		lock;
+	pthread_cond_t		cond;
+	t_waiter			waiters[MAX_DONGLE_WAITERS];
+	int					waiters_count;
 	unsigned long long	next_order;
 }	t_dongle;
 
@@ -113,5 +112,13 @@ void	*monitor_routine(void *arg);
 
 int		sim_init(t_sim *sim, t_params *p);
 void	sim_destroy(t_sim *sim);
+int		parse_second_group(char **argv, t_params *p);
+int		parse_args(int argc, char **argv, t_params *p);
+int		print_invalid(const char *name);
+int		parse_positive(const char *str, int *out, const char *name,
+			int allow_zero);
+int		parse_scheduler(const char *str, t_params *p);
+int		parse_first_group(char **argv, t_params *p);
+void	set_fork_order(t_coder *c, int *first, int *second);
 
 #endif

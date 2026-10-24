@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:53 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:36:17 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 18:59:58 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,8 @@ static int	start_threads(t_sim *sim, pthread_t *monitor_th,
 	*monitor_started = 0;
 	while (i < sim->p.nb_coders)
 	{
-		if (pthread_create(&sim->coders[i].thread, NULL,
-				coder_routine, &sim->coders[i]) != 0)
+		if (pthread_create(&sim->coders[i].thread, NULL, coder_routine,
+				&sim->coders[i]) != 0)
 		{
 			fprintf(stderr, "codexion: failed to create coder thread\n");
 			return (-1);
@@ -40,8 +40,8 @@ static int	start_threads(t_sim *sim, pthread_t *monitor_th,
 	return (0);
 }
 
-static void	join_threads(t_sim *sim, int created_coders,
-		int monitor_started, pthread_t monitor_th)
+static void	join_threads(t_sim *sim, int created_coders, int monitor_started,
+		pthread_t monitor_th)
 {
 	int	i;
 
@@ -57,11 +57,11 @@ static void	join_threads(t_sim *sim, int created_coders,
 
 int	main(int argc, char **argv)
 {
-	t_params	p;
-	t_sim		sim;
-	pthread_t	monitor_th;
-	int			created_coders;
-	int			monitor_started;
+	t_params		p;
+	t_sim			sim;
+	pthread_t		monitor_th;
+	int				created_coders;
+	int				monitor_started;
 
 	if (parse_args(argc, argv, &p) == -1)
 		return (1);
@@ -70,8 +70,8 @@ int	main(int argc, char **argv)
 		fprintf(stderr, "codexion: initialization failed (malloc)\n");
 		return (1);
 	}
-	if (start_threads(&sim, &monitor_th, &created_coders,
-			&monitor_started) == -1)
+	if (start_threads(&sim, &monitor_th, &created_coders, &monitor_started)
+		== -1)
 	{
 		set_stop(&sim, -1);
 		join_threads(&sim, created_coders, monitor_started, monitor_th);

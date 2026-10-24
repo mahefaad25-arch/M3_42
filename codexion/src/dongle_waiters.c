@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:36 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:35:46 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 20:01:41 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,10 +17,7 @@ static int	waiter_has_priority(t_sim *sim, const t_waiter *a,
 {
 	if (sim->p.scheduler == CX_SCHED_FIFO && a->order != b->order)
 		return (a->order < b->order);
-	// if (sim->p.scheduler == CX_SCHED_LIFO && a->order != b->order)
-	// 	return (a->order > b->order);
-	if (sim->p.scheduler == CX_SCHED_EDF
-		&& a->deadline_ms != b->deadline_ms)
+	if (sim->p.scheduler == CX_SCHED_EDF && a->deadline_ms != b->deadline_ms)
 		return (a->deadline_ms < b->deadline_ms);
 	if (a->order != b->order)
 		return (a->order < b->order);
@@ -35,8 +32,7 @@ static void	heap_sift_up(t_sim *sim, t_dongle *d, int index)
 	while (index > 0)
 	{
 		parent = (index - 1) / 2;
-		if (!waiter_has_priority(sim, &d->waiters[index],
-				&d->waiters[parent]))
+		if (!waiter_has_priority(sim, &d->waiters[index], &d->waiters[parent]))
 			break ;
 		tmp = d->waiters[index];
 		d->waiters[index] = d->waiters[parent];
@@ -57,13 +53,11 @@ static void	heap_sift_down(t_sim *sim, t_dongle *d, int index)
 		left = index * 2 + 1;
 		right = left + 1;
 		best = index;
-		if (left < d->waiters_count
-			&& waiter_has_priority(sim, &d->waiters[left],
-				&d->waiters[best]))
+		if (left < d->waiters_count && waiter_has_priority(sim,
+				&d->waiters[left], &d->waiters[best]))
 			best = left;
-		if (right < d->waiters_count
-			&& waiter_has_priority(sim, &d->waiters[right],
-				&d->waiters[best]))
+		if (right < d->waiters_count && waiter_has_priority(sim,
+				&d->waiters[right], &d->waiters[best]))
 			best = right;
 		if (best == index)
 			break ;

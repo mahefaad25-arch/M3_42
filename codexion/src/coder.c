@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:28 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 19:04:58 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 19:54:34 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,16 +29,7 @@ static int	take_both_dongles(t_coder *c)
 	long	deadline;
 
 	deadline = get_deadline(c);
-	if (c->left_dongle < c->right_dongle)
-	{
-		first = c->left_dongle;
-		second = c->right_dongle;
-	}
-	else
-	{
-		first = c->right_dongle;
-		second = c->left_dongle;
-	}
+	set_fork_order(c, &first, &second);
 	if (dongle_try_take(c->sim, first, c->id, deadline) == -1)
 		return (-1);
 	log_state(c->sim, c->id, "has taken a dongle");
@@ -59,15 +50,15 @@ static int	compile_phase(t_coder *c)
 	c->last_compile_start = get_timestamp_ms(c->sim);
 	pthread_mutex_unlock(&c->deadline_lock);
 	log_state(c->sim, c->id, "is compiling");
+	pthread_mutex_lock(&c->deadline_lock);
+	c->nb_compiles++;
+	pthread_mutex_unlock(&c->deadline_lock);
 	if (ft_usleep_ms(c->sim, c->sim->p.time_to_compile) == -1)
 	{
 		dongle_release(c->sim, c->left_dongle);
 		dongle_release(c->sim, c->right_dongle);
 		return (-1);
 	}
-	pthread_mutex_lock(&c->deadline_lock);
-	c->nb_compiles++;
-	pthread_mutex_unlock(&c->deadline_lock);
 	dongle_release(c->sim, c->left_dongle);
 	dongle_release(c->sim, c->right_dongle);
 	if (check_all_compiled_enough(c->sim))

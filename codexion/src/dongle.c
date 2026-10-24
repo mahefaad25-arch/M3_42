@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bramahef <bramahef@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/23 00:00:00 by bramahef          #+#    #+#             */
-/*   Updated: 2026/10/24 01:53:39 by bramahef         ###   ########.fr       */
+/*   Created: 2026/10/24 18:35:50 by bramahef          #+#    #+#             */
+/*   Updated: 2026/10/24 19:47:31 by bramahef         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,15 +32,14 @@ void	dongle_destroy(t_dongle *d)
 
 static int	wait_for_turn(t_sim *sim, t_dongle *d, int coder_id)
 {
-	long		now;
+	long	now;
 
 	while (!is_stopped(sim))
 	{
 		now = get_timestamp_ms(sim);
-		if (d->taken == 0 && (d->free_since_ms < 0
-				|| now - d->free_since_ms >= sim->p.dongle_cooldown)
-			&& d->waiters_count > 0
-			&& d->waiters[0].coder_id == coder_id)
+		if (d->taken == 0 && (d->free_since_ms < 0 || now
+				- d->free_since_ms >= sim->p.dongle_cooldown)
+			&& d->waiters_count > 0 && d->waiters[0].coder_id == coder_id)
 			break ;
 		short_timed_wait(&d->cond, &d->lock);
 	}
